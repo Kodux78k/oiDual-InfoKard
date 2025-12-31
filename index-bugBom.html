@@ -1,0 +1,602 @@
+
+
+  <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Dual.Infodose — Ultra Panel Turbinado</title>
+ <!-- PWA / Assets (paths relativos com ./ conforme pedido) -->
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icon-192.png" />
+
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <meta name="theme-color" content="#030508">
+
+  <style>
+    /* ---------- Root / Reset ---------- */
+    :root{
+      --bg-dark:#030508;
+      --glass: rgba(18,22,33,0.9);
+      --glass-border: rgba(255,255,255,0.08);
+      --accent-blue:#4fd4ff;
+      --accent-orange:#ff9a3c;
+      --accent-purple:#a855f7;
+      --radius-xl:40px;
+      --radius-md:20px;
+      --ease-in-out:cubic-bezier(0.4,0,0.2,1);
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;outline:none}
+    html,body{height:100%;margin:0;font-family:'Montserrat',sans-serif;background:var(--bg-dark);color:#fff;display:flex;flex-direction:column;align-items:center;padding:18px;gap:18px}
+    button{cursor:pointer}
+
+    /* ---------- ULTRA HERO (isolated in #ultra-hero) ---------- */
+    #ultra-hero{width:100%;max-width:460px;position:relative}
+    #ultra-hero .aurora{position:fixed;inset:0;z-index:-3;pointer-events:none}
+    #ultra-hero .blob{position:absolute;border-radius:50%;filter:blur(120px);opacity:0.14;animation:float 20s infinite alternate}
+    #ultra-hero .b1{width:600px;height:600px;background:var(--accent-blue);top:-20%;left:-20%}
+    #ultra-hero .b2{width:500px;height:500px;background:var(--accent-purple);bottom:-10%;right:-10%;animation-delay:-5s}
+    @keyframes float{from{transform:translate(0,0)rotate(0deg)}to{transform:translate(100px,50px)rotate(30deg)}}
+
+    .hero-card{background:var(--glass);backdrop-filter:blur(25px);border:1px solid var(--glass-border);border-radius:var(--radius-xl);padding:32px;box-shadow:0 50px 100px -20px rgba(0,0,0,0.7);transition:all 0.6s var(--ease-in-out);position:relative;overflow:hidden}
+    .hero-card.mini{padding:20px 24px;border-radius:30px;transform:translateY(100px) scale(0.96)}
+    .view-toggle{position:absolute;top:20px;right:24px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);display:flex;align-items:center;justify-content:center;color:#fff;z-index:10}
+    .view-toggle:active{transform:scale(0.94)}
+    .header-main{margin-bottom:28px;transition:all 0.5s}
+    .badge{display:inline-block;padding:6px 12px;border-radius:20px;background:rgba(79,212,255,0.08);color:var(--accent-blue);font-size:0.65rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px}
+    .user-greeting h1{margin:0;font-size:2.2rem;font-weight:800;letter-spacing:-1px}
+    .user-greeting p{margin:4px 0 0;color:rgba(255,255,255,0.4);font-size:0.9rem}
+    .content-body{transition:all 0.5s var(--ease-in-out);max-height:1200px;opacity:1}
+    .hero-card.mini .content-body{max-height:0;opacity:0;pointer-events:none;margin:0}
+    .status-row{display:flex;justify-content:space-between;align-items:center;margin:24px 0;padding:16px;border-radius:var(--radius-md);background:rgba(255,255,255,0.03);border:1px solid var(--glass-border)}
+    .clock{font-family:'JetBrains Mono';font-size:1.4rem;font-weight:500}
+    .date{font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px}
+    .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px}
+    .action-btn{background:rgba(255,255,255,0.02);border:1px solid var(--glass-border);border-radius:24px;padding:16px;text-align:left;transition:all 0.26s cubic-bezier(0.2,1,0.22,1);cursor:pointer;user-select:none}
+    .action-btn:active{transform:scale(0.98)}
+    .action-btn .icon{font-size:1.4rem;display:block;margin-bottom:8px}
+    .action-btn .label{font-size:0.65rem;font-weight:700;color:rgba(255,255,255,0.34);text-transform:uppercase}
+    .action-btn .title{font-size:0.95rem;font-weight:700}
+    .action-btn.active{border-color:var(--accent-blue);box-shadow:0 0 20px rgba(79,212,255,0.12)}
+    .primary-trigger{margin-top:24px;padding:18px;border-radius:var(--radius-md);background:linear-gradient(135deg, rgba(255,154,60,0.16), rgba(168,85,247,0.08));border:1px solid rgba(255,154,60,0.34);display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+    .orb{width:48px;height:48px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#000;font-size:1.2rem}
+    .progress-section{margin-top:28px}
+    .progress-bar{height:6px;background:rgba(255,255,255,0.08);border-radius:10px;overflow:hidden}
+    .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent-blue),var(--accent-purple));transition:width 700ms ease}
+    .progress-labels{display:flex;justify-content:space-between;margin-top:12px;font-size:0.6rem;color:rgba(255,255,255,0.32);font-weight:600}
+
+    /* small hint */
+    .nav-hint{ text-align:center;margin-top:8px;font-size:0.62rem;color:rgba(255,255,255,0.18);text-transform:uppercase;letter-spacing:2px }
+
+    /* ---------- VAULT / INJECTOR (isolated in #vault-system) ---------- */
+    #vault-system{width:100%;max-width:920px;display:flex;flex-direction:column;gap:12px}
+    .master-card{width:100%;max-width:740px;background:rgba(30,30,30,0.35);backdrop-filter:blur(18px);border-radius:18px;border:1px solid rgba(255,255,255,0.06);padding:12px;box-shadow:0 8px 32px rgba(0,0,0,0.6)}
+    .header{display:flex;justify-content:space-between;align-items:center}
+    .card-title{font-weight:800;font-size:14px}
+    .card-meta{font-size:11px;color:rgba(255,255,255,0.45);font-family:'JetBrains Mono',monospace}
+    .dock{display:flex;gap:8px}
+    .ico{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);color:#cbd5e1;cursor:pointer}
+    .ico:hover{transform:scale(1.05)}
+    .content-box{max-height:0;overflow:hidden;opacity:0;transition:all 0.28s}
+    .expanded .content-box{max-height:1200px;opacity:1;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06)}
+    .code-area{width:100%;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:10px;color:#e2e8f0;font-family:'JetBrains Mono',monospace;font-size:13px;min-height:100px}
+    .warframe-view{width:100%;height:300px;border:none;border-radius:10px;margin-top:8px;box-shadow:inset 0 0 20px rgba(0,0,0,0.08)}
+    .filter-bar{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+    .filter-pill{background:rgba(30,30,30,0.35);border:1px solid rgba(255,255,255,0.04);padding:8px 14px;border-radius:20px;color:rgba(255,255,255,0.7);cursor:pointer;white-space:nowrap}
+    .filter-pill.active{background:var(--accent-blue);color:#001}
+    .ext-card-wrap{animation:slideIn 0.28s ease}
+    @keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+
+    /* responsive */
+    @media (max-width:640px){
+      .user-greeting h1{font-size:1.5rem}
+      #vault-system{width:100%}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ULTRA HERO -->
+  <section id="ultra-hero" aria-label="Painel Ultra Hero">
+    <div class="aurora" aria-hidden="true">
+      <div class="blob b1"></div>
+      <div class="blob b2"></div>
+    </div>
+
+    <div class="hero-card" id="mainCard" role="region" aria-labelledby="hero-title">
+      <button class="view-toggle" id="toggleBtn" aria-pressed="false" aria-label="Alternar modo compacto" title="Alternar modo compacto" tabindex="0">
+        <span id="toggleIcon">↘</span>
+      </button>
+
+      <header class="header-main">
+        <span class="badge" id="cycle-label">Fase de Ascensão</span>
+        <div class="user-greeting">
+          <h1 id="hero-title">Olá, <span id="greetName">Dual</span></h1>
+          <p id="cycle-msg">Preparado para a ativação neural?</p>
+        </div>
+      </header>
+
+      <div class="content-body">
+        <div class="status-row" role="status" aria-live="polite">
+          <div class="clock" id="clock">00:00:00</div>
+          <div class="date" id="date">21 DEZEMBRO</div>
+        </div>
+
+        <div class="action-grid" id="actionGrid">
+          <div class="action-btn" role="button" tabindex="0" data-action="Frequência Alpha" aria-label="Alpha 14Hz" onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); activate('Frequência Alpha', this, event);}">
+            <span class="icon">🧠</span>
+            <span class="label">Mente</span>
+            <span class="title">Alpha 14Hz</span>
+          </div>
+          <div class="action-btn" role="button" tabindex="0" data-action="Bio-Sincronia" aria-label="Bio Sync" onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); activate('Bio-Sincronia', this, event);}">
+            <span class="icon">🧬</span>
+            <span class="label">Corpo</span>
+            <span class="title">Bio-Sync</span>
+          </div>
+          <div class="action-btn" role="button" tabindex="0" data-action="Deep Work" aria-label="Deep Work" onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); activate('Deep Work', this, event);}">
+            <span class="icon">🎯</span>
+            <span class="label">Foco</span>
+            <span class="title">Deep Work</span>
+          </div>
+          <div class="action-btn" role="button" tabindex="0" data-action="Reset de Cache" aria-label="Void Reset" onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); activate('Reset de Cache', this, event);}">
+            <span class="icon">🧹</span>
+            <span class="label">Sistema</span>
+            <span class="title">Void Reset</span>
+          </div>
+        </div>
+
+        <div class="primary-trigger" id="mainTrigger" role="button" tabindex="0" aria-label="Iniciar ativação" onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); document.getElementById('mainTrigger').click(); }">
+          <div class="txt-group">
+            <span style="font-size:0.6rem;color:var(--accent-orange);display:block;font-weight:800;text-transform:uppercase">Ativação de Ciclo</span>
+            <span class="txt" id="arch-name">Conectar Atlas</span>
+          </div>
+          <div class="orb" aria-hidden="true">⚡</div>
+        </div>
+
+        <div class="progress-section" aria-hidden="false">
+          <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="p-fill" style="width:45%"></div></div>
+          <div class="progress-labels">
+            <span>START 06:00</span>
+            <span id="p-text">45% COMPLETADO</span>
+            <span>END 23:00</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-hint" id="hint-text">Modo Landing Page Ativo</div>
+    </div>
+  </section>
+
+  <!-- VAULT / INJECTOR -->
+  <section id="vault-system" aria-label="Dual Vault">
+    <div style="display:flex;gap:10px;align-items:center;width:100%;max-width:740px">
+      <div class="filter-bar" id="filterBar" style="flex:1">
+        <div class="filter-pill active" data-filter="ALL" tabindex="0" role="button" aria-pressed="true" onclick="filterVault('ALL', this, event)" onkeydown="if(event.key==='Enter'){filterVault('ALL', this, event)}">ALL</div>
+        <div class="filter-pill" data-filter="CODE" tabindex="0" role="button" onclick="filterVault('CODE', this, event)" onkeydown="if(event.key==='Enter'){filterVault('CODE', this, event)}">CODE</div>
+        <div class="filter-pill" data-filter="DOCS" tabindex="0" role="button" onclick="filterVault('DOCS', this, event)" onkeydown="if(event.key==='Enter'){filterVault('DOCS', this, event)}">DOCS</div>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button class="ico" title="Salvar nome" id="saveNameBtn">💾</button>
+      </div>
+    </div>
+
+    <div class="master-card" id="injector">
+      <div class="header">
+        <div style="display:flex;flex-direction:column;">
+          <span class="card-title">⚡ INFINITY INJECTOR</span>
+          <span class="card-meta">WARFRAME_READY • v9.0</span>
+        </div>
+        <div class="dock">
+          <button class="ico flash" id="magicPasteBtn" title="Clipboard Turbo Save">⎘</button>
+          <button class="ico" id="toggleMainBtn" title="Abrir/Fechar">▣</button>
+        </div>
+      </div>
+
+      <div class="" id="main" role="region" aria-label="Injector Main">
+        <div class="content-box" id="mainContent" style="max-height:600px;opacity:1;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06)">
+          <textarea id="mainInput" class="code-area" placeholder="Cole ou escreva aqui…"></textarea>
+          <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+            <input id="mainGroup" placeholder="(StkZ)" style="background:transparent;border:1px solid rgba(255,255,255,0.06);color:white;padding:8px;border-radius:8px;width:18%;font-size:13px">
+            <button class="ico" id="saveManualBtn" title="Salvar manual">✚</button>
+            <button class="ico" id="injectExtBtn" title="Inject external">↳</button>
+            <input type="file" id="importFile" accept=".json,.html,.md,.patch,.rds,.css,.js,.txt" style="display:none">
+            <button class="ico" id="importBtn" title="Import file">⬆</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="ext-layer" style="width:100%;max-width:740px"></div>
+
+    <div id="vault" style="width:100%;max-width:740px"></div>
+  </section>
+
+  <!-- Small prompt to set name -->
+  <div style="width:100%;max-width:740px;display:flex;gap:8px;align-items:center">
+    <input id="profileNameInput" placeholder="Seu nome (será salvo)" style="flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#fff">
+    <button id="profileSave" class="ico" title="Salvar">✓</button>
+  </div>
+
+<script>
+/* ------------------------- Utilities ------------------------- */
+function safeSpeak(text, opts = {}) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = opts.lang || 'pt-BR';
+  u.rate = opts.rate || 1.0;
+  window.speechSynthesis.speak(u);
+}
+
+/* ------------------------- HERO PANEL ------------------------- */
+(function(){
+  const CONFIG = {
+    morning:{label:"Fase de Ascensão",msg:"Aproveite o pico de cortisol para estruturar.",arch:"Atlas: O Pilar"},
+    afternoon:{label:"Pico de Entrega",msg:"Mantenha o ritmo. Foco total no fluxo.",arch:"Artemis: O Alvo"},
+    evening:{label:"Ciclo de Síntese",msg:"Hora de descompressão e limpeza.",arch:"Serena: A Calma"}
+  };
+
+  const mainCard = document.getElementById('mainCard');
+  const toggleBtn = document.getElementById('toggleBtn');
+  const toggleIcon = document.getElementById('toggleIcon');
+  const hintText = document.getElementById('hint-text');
+  const clockEl = document.getElementById('clock');
+  const dateEl = document.getElementById('date');
+  const cycleLabelEl = document.getElementById('cycle-label');
+  const cycleMsgEl = document.getElementById('cycle-msg');
+  const archNameEl = document.getElementById('arch-name');
+  const pFill = document.getElementById('p-fill');
+  const pText = document.getElementById('p-text');
+  const greetNameEl = document.getElementById('greetName');
+  const profileNameInput = document.getElementById('profileNameInput');
+  const profileSaveBtn = document.getElementById('profileSave');
+
+  // Load saved name
+  const savedName = localStorage.getItem('dual_name') || '';
+  if (savedName) { greetNameEl.innerText = savedName; profileNameInput.value = savedName; }
+
+  // Toggle mini
+  toggleBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const isMini = mainCard.classList.toggle('mini');
+    toggleIcon.innerText = isMini ? '↖' : '↘';
+    toggleBtn.setAttribute('aria-pressed', String(isMini));
+    hintText.innerText = isMini ? 'Modo Controle Rápido' : 'Modo Landing Page Ativo';
+    safeSpeak(isMini ? 'Modo de controle rápido ativado.' : 'Retornando ao painel completo.', {rate:1.05});
+  });
+
+  // Primary trigger
+  document.getElementById('mainTrigger').addEventListener('click', ()=>{
+    safeSpeak(`Iniciando ritual de ${archNameEl.innerText}. Prepare-se.`);
+    // visual feedback pulse
+    const orb = document.querySelector('.orb');
+    orb.animate([{transform:'scale(1)'},{transform:'scale(1.06)'},{transform:'scale(1)'}],{duration:420});
+  });
+
+  // Action buttons: delegated click + keyboard already handled inline
+  document.getElementById('actionGrid').addEventListener('click', (e)=>{
+    const btn = e.target.closest('.action-btn');
+    if(!btn) return;
+    activate(btn.dataset.action, btn, e);
+  });
+
+  // Update clock and cycle
+  function update() {
+    const now = new Date();
+    const h = now.getHours(); const m = now.getMinutes(); const s = now.getSeconds();
+    clockEl.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    dateEl.innerText = now.toLocaleDateString('pt-BR',{day:'numeric',month:'long'}).toUpperCase();
+
+    let key = 'evening';
+    if (h >= 5 && h < 12) key='morning';
+    else if (h >= 12 && h < 18) key='afternoon';
+    const data = CONFIG[key];
+    cycleLabelEl.innerText = data.label;
+    cycleMsgEl.innerText = data.msg;
+    archNameEl.innerText = data.arch;
+
+    // progress (6h - 23h)
+    const start = 6, end = 23;
+    let progress = ((h + m/60 - start) / (end - start)) * 100;
+    progress = Math.max(0, Math.min(100, progress));
+    pFill.style.width = `${progress}%`;
+    pText.innerText = `${Math.floor(progress)}% COMPLETADO`;
+  }
+  setInterval(update, 1000);
+  update();
+
+  // Profile name save hook
+  profileSaveBtn.addEventListener('click', ()=>{
+    const v = profileNameInput.value.trim() || 'Dual';
+    localStorage.setItem('dual_name', v);
+    greetNameEl.innerText = v;
+    profileNameInput.value = v;
+    safeSpeak(`Pronto ${v}, nome salvo.`);
+  });
+
+  // Expose small API
+  window.UltraHero = {
+    setName: (n) => { localStorage.setItem('dual_name', n); greetNameEl.innerText = n; }
+  };
+})();
+
+/* ------------------------- Activate function (fixed) ------------------------- */
+function activate(task = 'Ação', btn = null, event = null) {
+  // btn may be the element or null
+  try { if (btn && btn.classList) { btn.classList.add('active'); setTimeout(()=>btn.classList.remove('active'), 520); } } catch(e){}
+  safeSpeak(`${task} ativado. Sincronizando sua frequência.`);
+}
+
+/* ------------------------- VAULT / INJECTOR ------------------------- */
+(function(){
+  let items = JSON.parse(localStorage.getItem('vault_v9') || '[]');
+  let currentFilter = 'ALL';
+  let editingId = null;
+
+  const vaultEl = document.getElementById('vault');
+  const extLayer = document.getElementById('ext-layer');
+
+  function render() {
+    const filtered = currentFilter === 'ALL' ? items : items.filter(i => (i.group||'').toUpperCase() === currentFilter);
+    vaultEl.innerHTML = filtered.map(i => renderCardHTML(i)).join('');
+    attachCardListeners();
+  }
+
+  function renderCardHTML(i){
+    return `
+      <div class="master-card" id="card-${i.id}">
+        <div class="header">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <span class="card-title">${escapeHtml(i.title)}</span>
+            <span class="card-meta">${escapeHtml((i.group||'').toUpperCase())} • ${escapeHtml(i.date)}</span>
+          </div>
+          <div class="dock">
+            <button class="ico tts" data-id="${i.id}" title="Ouvir">🔊</button>
+            <button class="ico share" data-id="${i.id}" title="Compartilhar">⤴</button>
+            <button class="ico" data-id="${i.id}" title="Preview">▣</button>
+            <button class="ico" data-id="${i.id}" title="Editar">✎</button>
+            <button class="ico del" data-id="${i.id}" title="Deletar">✖</button>
+          </div>
+        </div>
+        <div class="content-box" id="box-${i.id}">
+          <textarea readonly class="code-area" id="txt-${i.id}" style="border:none;background:transparent">${escapeHtml(i.content)}</textarea>
+          <div id="frame-container-${i.id}" style="display:none"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function attachCardListeners(){
+    // Attach controls (delegation not used here for clarity)
+    vaultEl.querySelectorAll('.ico').forEach(btn=>{
+      const id = btn.getAttribute('data-id');
+      btn.onclick = (e)=>{
+        e.stopPropagation();
+        const cls = btn.classList;
+        if (cls.contains('tts')) speakCard(Number(id));
+        else if (cls.contains('share')) shareCard(Number(id));
+        else if (cls.contains('del')) deleteCard(Number(id));
+        else {
+          // preview / edit / other: decide by title
+          const title = btn.title.toLowerCase();
+          if (title.includes('preview')) toggleRender(Number(id));
+          else startEdit(Number(id));
+        }
+      };
+    });
+
+    // Toggle content expand/collapse on card click
+    vaultEl.querySelectorAll('.master-card').forEach(card=>{
+      card.onclick = () => card.classList.toggle('expanded');
+    });
+  }
+
+  // Helper escape
+  function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // CRUD
+  function createCard(content, group = "") {
+    const lines = content.trim().split('\n');
+    const title = (lines[0] || 'Sem Título').substring(0,40).replace(/[#<*]/g,'').trim();
+    const item = { id: Date.now() + Math.floor(Math.random()*9999), title, content, group: (group||'').toUpperCase(), date: new Date().toLocaleString('pt-BR') };
+    items.unshift(item); save();
+  }
+
+  // Save localstorage
+  function save(){ localStorage.setItem('vault_v9', JSON.stringify(items)); render(); }
+
+  // Clipboard magic paste
+  document.getElementById('magicPasteBtn').addEventListener('click', async ()=>{
+    try {
+      if (!navigator.clipboard) throw new Error('Clipboard API não disponível');
+      const text = await navigator.clipboard.readText();
+      if (text) { createCard(text, 'CLIPBOARD'); safeSpeak('Card criado a partir do clipboard.'); } else alert('Clipboard vazio');
+    } catch (err) { alert('Permissão de colar negada ou não suportado'); }
+  });
+
+  // Save manual
+  document.getElementById('saveManualBtn').addEventListener('click', ()=>{
+    const txt = document.getElementById('mainInput').value.trim();
+    const group = document.getElementById('mainGroup').value.trim();
+    if (!txt) { alert('Nada para salvar'); return; }
+    createCard(txt, group || 'MANUAL');
+    document.getElementById('mainInput').value = '';
+  });
+
+  // Inject external (create visual card)
+  document.getElementById('injectExtBtn').addEventListener('click', ()=>{
+    const val = document.getElementById('mainInput').value.trim();
+    if(!val) return alert('Nada para injetar');
+    const title = val.split('\n')[0].slice(0,30) || 'External';
+    const d = document.createElement('div');
+    d.innerHTML = `
+      <div class="master-card ext-card-wrap">
+        <div class="header">
+          <span class="card-title">🚀 ${escapeHtml(title)}</span>
+          <div class="dock"><button class="ico del" title="Remover">×</button></div>
+        </div>
+        <div style="margin-top:10px;color:#ccc;font-size:13px">${escapeHtml(val)}</div>
+      </div>`;
+    extLayer.prepend(d);
+    // attach remove
+    d.querySelector('.ico.del').onclick = () => d.remove();
+    document.getElementById('mainInput').value = '';
+  });
+
+  // Import file
+  const importFile = document.getElementById('importFile');
+  document.getElementById('importBtn').addEventListener('click', ()=>importFile.click());
+  importFile.addEventListener('change', (ev)=>{
+    const file = ev.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if(!Array.isArray(data)) return alert('Arquivo inválido');
+        let count=0;
+        data.forEach(card=>{
+          if (card && card.content) { card.id = Date.now() + Math.floor(Math.random()*9999); items.unshift(card); count++; }
+        });
+        save();
+        alert(`${count} cards importados`);
+      } catch(err) { alert('Erro ao ler arquivo'); }
+    };
+    reader.readAsText(file);
+  });
+
+  // Share card (web share fallback to clipboard)
+  function shareCard(id){
+    const item = items.find(i=>i.id===id); if(!item) return;
+    if (navigator.share) navigator.share({title:item.title,text:item.content}).catch(()=>{});
+    else { navigator.clipboard.writeText(item.content).then(()=>alert('Copiado para clipboard')); }
+  }
+
+  // Speak card
+  function speakCard(id){
+    const item = items.find(i=>i.id===id); if(!item) return;
+    safeSpeak(item.content, {rate:1.05});
+  }
+
+  // Toggle render (iframe preview + cinema)
+  function toggleRender(id){
+    const txt = document.getElementById(`txt-${id}`);
+    const frameBox = document.getElementById(`frame-container-${id}`);
+    const item = items.find(i=>i.id===id);
+    if(!item) return;
+    if (frameBox.style.display === 'block') {
+      txt.style.display = 'block';
+      frameBox.style.display = 'none';
+      frameBox.innerHTML = '';
+      return;
+    }
+    txt.style.display = 'none';
+    frameBox.style.display = 'block';
+    frameBox.innerHTML = '';
+    // toolbar
+    const toolbar = document.createElement('div');
+    toolbar.style.cssText = 'display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px';
+    const btnExpand = document.createElement('button'); btnExpand.className='tag-badge'; btnExpand.innerText='⛶ Cinema';
+    btnExpand.onclick = (e) => {
+      e.stopPropagation();
+      const fs = document.createElement('div');
+      fs.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#000;padding:18px;display:flex;flex-direction:column';
+      const closeFs = document.createElement('button'); closeFs.innerText='❌ Fechar Modo Cinema'; closeFs.style.cssText='align-self:flex-end;padding:8px 16px;background:#ef4444;border-radius:8px;color:#fff;border:none;margin-bottom:12px';
+      closeFs.onclick = ()=>fs.remove();
+      const bigFrame = document.createElement('iframe');
+      bigFrame.style.cssText='width:100%;height:100%;border:none;border-radius:8px;background:#fff';
+      bigFrame.setAttribute('sandbox','allow-scripts allow-same-origin');
+      fs.appendChild(closeFs); fs.appendChild(bigFrame); document.body.appendChild(fs);
+      const doc = bigFrame.contentWindow.document; doc.open(); doc.write(item.content); doc.close();
+    };
+    const btnClose = document.createElement('button'); btnClose.className='tag-badge'; btnClose.innerText='✖ Fechar Preview';
+    btnClose.onclick = (e) => { e.stopPropagation(); txt.style.display='block'; frameBox.style.display='none'; frameBox.innerHTML=''; };
+    toolbar.appendChild(btnExpand); toolbar.appendChild(btnClose);
+    frameBox.appendChild(toolbar);
+
+    const iframe = document.createElement('iframe');
+    iframe.className='warframe-view';
+    iframe.setAttribute('sandbox','allow-scripts allow-same-origin');
+    frameBox.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document; doc.open(); doc.write(item.content); doc.close();
+  }
+
+  // delete card
+  function deleteCard(id){
+    if(!confirm('Deletar Card?')) return;
+    items = items.filter(i=>i.id!==id);
+    save();
+  }
+
+  // edit (simple inline open)
+  function startEdit(id){
+    const item = items.find(i=>i.id===id); if(!item) return;
+    editingId = id;
+    const editHtml = `
+      <div class="master-card expanded" id="edit-${id}">
+        <div class="header">
+          <input id="edit-title-${id}" value="${escapeHtml(item.title)}" style="padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);width:60%">
+          <input id="edit-group-${id}" value="${escapeHtml(item.group||'')}" style="padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);width:20%;margin-left:5px">
+          <div class="dock"><button class="ico flash" id="save-edit-${id}">✓</button></div>
+        </div>
+        <div class="content-box" style="opacity:1;max-height:none;margin-top:12px">
+          <textarea id="edit-content-${id}" class="code-area">${escapeHtml(item.content)}</textarea>
+        </div>
+      </div>`;
+    // replace current card
+    const cardEl = document.getElementById(`card-${id}`);
+    cardEl.outerHTML = editHtml;
+    // save handler
+    document.getElementById(`save-edit-${id}`).onclick = ()=>{
+      const it = items.find(x=>x.id===id);
+      it.title = document.getElementById(`edit-title-${id}`).value;
+      it.group = document.getElementById(`edit-group-${id}`).value.toUpperCase();
+      it.content = document.getElementById(`edit-content-${id}`).value;
+      it.date = new Date().toLocaleString('pt-BR') + ' (Edit)';
+      editingId = null; save();
+    };
+  }
+
+  // filter
+  window.filterVault = function(filter, el, ev) {
+    ev && ev.stopPropagation();
+    currentFilter = filter;
+    document.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('active'));
+    if (el) el.classList.add('active');
+    render();
+  };
+
+  // expose functions used by outer scope
+  window.createCard = createCard;
+  window.toggleRender = toggleRender;
+  window.startEdit = startEdit;
+  window.deleteCard = deleteCard;
+  window.shareCard = shareCard;
+  window.speakCard = speakCard;
+
+  // init render
+  render();
+})();
+
+/* ------------------------- Small helpers ------------------------- */
+function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function speak(text){ safeSpeak(text, {rate:1.12}); }
+
+/* ------------------------- Accessibility: allow Enter/Space on injected action-btns ------------------------- */
+document.addEventListener('keydown', (e)=>{
+  // quick close of any fullscreen overlays with Escape
+  if (e.key === 'Escape') {
+    document.querySelectorAll('div[style*="position:fixed"]').forEach(d=>d.remove());
+  }
+});
+</script>
+
+</body>
+</html>

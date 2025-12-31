@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dual.Infodose · Activation Panel v4 (Accordion)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #020406;
+      --accent-blue: #4fd4ff;
+      --accent-purple: #a855f7;
+      --accent-gold: #f59e0b;
+      --glass: rgba(6, 10, 18, 0.8);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --radius-xl: 40px;
+      --radius-lg: 24px;
+      --font-main: 'Montserrat', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --ease-elastic: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      margin: 0; padding: 0;
+      min-height: 100vh;
+      background-color: var(--bg-dark);
+      color: #fff;
+      font-family: var(--font-main);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Ambient Background */
+    .ambient-glow {
+      position: fixed; inset: 0; z-index: -1;
+      filter: blur(100px); opacity: 0.2;
+    }
+    .blob { position: absolute; border-radius: 50%; animation: orbit 30s infinite linear; }
+    .blob-1 { width: 400px; height: 400px; background: var(--accent-blue); top: -10%; left: -10%; }
+    .blob-2 { width: 300px; height: 300px; background: var(--accent-purple); bottom: 10%; right: -5%; animation-duration: 20s; }
+
+    @keyframes orbit {
+      0% { transform: translate(0,0) scale(1); }
+      50% { transform: translate(50px, 100px) scale(1.2); }
+      100% { transform: translate(0,0) scale(1); }
+    }
+
+    .container { width: 100%; max-width: 400px; padding: 20px; perspective: 1000px; }
+
+    /* --- ACTIVATION CARD (Accordion Logic) --- */
+    .activation-card {
+      background: var(--glass);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: 32px 32px 10px 32px; /* Bottom padding reduced for closed state */
+      box-shadow: 0 40px 80px rgba(0,0,0,0.8);
+      text-align: center;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.5s var(--ease-smooth);
+      overflow: hidden;
+    }
+
+    /* Hover effect when closed */
+    .activation-card:not(.open):hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(79, 212, 255, 0.15);
+      border-color: rgba(79, 212, 255, 0.3);
+    }
+
+    /* Header Section (Always Visible) */
+    .card-header {
+      position: relative;
+      z-index: 2;
+      margin-bottom: 20px;
+    }
+
+    .brand-title { 
+      font-size: 0.7rem; font-weight: 800; letter-spacing: 5px; 
+      color: var(--accent-blue); text-transform: uppercase;
+      margin-bottom: 8px; display: block;
+    }
+    .main-logo {
+      font-size: 2.2rem; font-weight: 300; line-height: 1;
+      background: linear-gradient(to right, #fff 40%, var(--accent-blue));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .main-logo b { font-weight: 800; }
+
+    /* Avatar Animation */
+    .avatar-container {
+      width: 100px; height: 100px; margin: 0 auto;
+      position: relative; display: flex; align-items: center; justify-content: center;
+      transition: all 0.5s var(--ease-elastic);
+    }
+    /* When closed, avatar is smaller */
+    .activation-card:not(.open) .avatar-container {
+      transform: scale(0.8);
+    }
+    
+    .avatar-ring {
+      position: absolute; inset: 0;
+      border: 2px dashed rgba(79, 212, 255, 0.3);
+      border-radius: 50%; animation: spin 10s infinite linear;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    
+    .avatar-core {
+      width: 70px; height: 70px; background: #fff;
+      border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      box-shadow: 0 0 30px rgba(79, 212, 255, 0.4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+      transition: all 0.5s var(--ease-out);
+    }
+
+    /* --- ACCORDION BODY (Hidden by default) --- */
+    .accordion-body {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: max-height 0.6s var(--ease-smooth), opacity 0.4s ease, margin-top 0.4s ease;
+      margin-top: 0;
+    }
+
+    /* Open State */
+    .activation-card.open {
+      padding-bottom: 32px;
+      cursor: default; /* Remove pointer cursor when open */
+    }
+
+    .activation-card.open .accordion-body {
+      max-height: 500px; /* Arbitrary height large enough to fit content */
+      opacity: 1;
+      margin-top: 24px;
+      overflow: visible; /* Allow shadows/tooltips */
+    }
+
+    /* Click Hint (visible only when closed) */
+    .click-hint {
+      font-size: 0.7rem; color: rgba(255,255,255,0.4);
+      margin-top: 15px; letter-spacing: 1px;
+      text-transform: uppercase; font-weight: 600;
+      opacity: 1; transition: opacity 0.3s;
+      animation: pulseText 2s infinite;
+    }
+    .activation-card.open .click-hint {
+      display: none; opacity: 0;
+    }
+
+    @keyframes pulseText { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
+
+    /* Input & Controls */
+    .input-group { margin-bottom: 32px; position: relative; }
+    .name-input {
+      width: 100%; background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px; padding: 16px;
+      font-family: var(--font-main); color: #fff;
+      font-size: 1.1rem; text-align: center;
+      transition: all 0.3s;
+    }
+    .name-input:focus {
+      border-color: var(--accent-blue);
+      background: rgba(255,255,255,0.06);
+      box-shadow: 0 0 20px rgba(79, 212, 255, 0.1); outline: none;
+    }
+    .input-label {
+      position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+      background: #0a0f1a; padding: 0 10px; font-size: 0.6rem;
+      font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase;
+    }
+
+    .status-bars {
+      display: flex; justify-content: center; gap: 8px; margin-bottom: 32px;
+    }
+    .bar {
+      width: 40px; height: 4px; background: rgba(255,255,255,0.1);
+      border-radius: 2px; position: relative; overflow: hidden;
+    }
+    .bar::after {
+      content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 0;
+      background: var(--accent-blue); transition: width 0.8s ease;
+    }
+    .active.bar::after { width: 100%; }
+
+    /* Buttons */
+    .btn-activate {
+      width: 100%; padding: 20px; border-radius: 20px;
+      border: none; cursor: pointer;
+      font-family: var(--font-main); font-weight: 800; font-size: 0.9rem;
+      text-transform: uppercase; letter-spacing: 1px;
+      background: #fff; color: #000;
+      transition: all 0.3s var(--ease-elastic);
+      margin-bottom: 12px;
+    }
+    .btn-activate:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(255,255,255,0.2); }
+    .btn-activate:active { transform: scale(0.97); }
+
+    .btn-whatsapp {
+      width: 100%; padding: 16px; border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.1); background: transparent;
+      color: #fff; font-family: var(--font-main); font-size: 0.75rem;
+      font-weight: 600; cursor: pointer; transition: 0.3s;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .btn-whatsapp:hover { background: rgba(255,255,255,0.05); border-color: #25d366; }
+
+    /* Artask Overlay */
+    .artask-overlay {
+      position: absolute; inset: 12px; background: #000;
+      border-radius: 30px; display: flex; flex-direction: column;
+      padding: 24px; text-align: left; transform: translateY(115%);
+      transition: transform 0.6s cubic-bezier(0.85, 0, 0.15, 1);
+      z-index: 10; border: 1px solid var(--accent-blue);
+    }
+    .artask-overlay.show { transform: translateY(0); }
+    .artask-header { font-size: 0.6rem; color: var(--accent-blue); font-weight: 800; margin-bottom: 16px; }
+    .artask-prompt { font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; color: #cbd5e1; }
+    .cursor { display: inline-block; width: 6px; height: 15px; background: var(--accent-blue); animation: blink 0.8s infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+  </style>
+</head>
+<body>
+
+  <div class="ambient-glow">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+  </div>
+
+  <div class="container">
+    <div class="activation-card" id="heroCard" onclick="toggleCard()">
+      
+      <div class="artask-overlay" id="artask" onclick="event.stopPropagation()">
+        <div class="artask-header">PROMPT DE ATIVAÇÃO GERADO</div>
+        <div class="artask-prompt">
+          > Inicializando simbiose...<br>
+          > Identidade: <span id="artask-name">--</span><br>
+          > Protocolo: Dual.Infodose<br>
+          > Status: <span style="color:var(--accent-gold)">READY</span><br><br>
+          <span id="typing-text">Conexão neural...</span><span class="cursor"></span>
+        </div>
+        <button class="btn-activate" style="margin-top: auto; background: var(--accent-blue);" onclick="closeArtask()">FECHAR</button>
+      </div>
+
+      <div class="card-header">
+        <div class="brand-header">
+          <span class="brand-title">Interface de Ativação</span>
+          <div class="main-logo">Dual.<b>Infodose</b></div>
+        </div>
+
+        <div class="avatar-container">
+          <div class="avatar-ring"></div>
+          <div class="avatar-core" id="avatar">🧬</div>
+        </div>
+        
+        <div class="click-hint">Toque para inicializar</div>
+      </div>
+
+      <div class="accordion-body">
+        <div onclick="event.stopPropagation()">
+          <div class="input-group">
+            <span class="input-label">NOME DO ASSISTENTE</span>
+            <input type="text" class="name-input" id="nameInput" placeholder="Ex: Kodux" maxlength="15" autocomplete="off">
+          </div>
+
+          <div class="status-bars">
+            <div class="bar" id="bar-3"></div>
+            <div class="bar" id="bar-6"></div>
+            <div class="bar" id="bar-9"></div>
+          </div>
+
+          <button class="btn-activate" id="btn-activate">ATIVAR SISTEMA</button>
+          
+          <button class="btn-whatsapp" id="btn-wa">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            VINCULAR WHATSAPP
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const heroCard = document.getElementById('heroCard');
+    const nameInput = document.getElementById('nameInput');
+    const avatar = document.getElementById('avatar');
+    const btnActivate = document.getElementById('btn-activate');
+    const artaskOverlay = document.getElementById('artask');
+    const artaskName = document.getElementById('artask-name');
+    const typingText = document.getElementById('typing-text');
+    const bars = [document.getElementById('bar-3'), document.getElementById('bar-6'), document.getElementById('bar-9')];
+
+    // Emojis dinâmicos
+    const avatars = ["⚡", "🧠", "🧬", "📡", "🌑", "🪐", "🛡️", "🏹"];
+    let hasWelcomed = false; // Controle para não repetir o TTS
+
+    window.onload = () => {
+      const savedName = localStorage.getItem('dual_info_name');
+      if (savedName) {
+        nameInput.value = savedName;
+        updateUI(savedName);
+      }
+    };
+
+    // Função de Accordion + TTS Trigger
+    function toggleCard() {
+      // Se já está aberto, não faz nada (ou você pode fazer .remove('open') para fechar)
+      if (heroCard.classList.contains('open')) return;
+
+      heroCard.classList.add('open');
+      
+      // Tocar TTS de boas vindas APENAS se houver nome salvo e for a primeira abertura
+      const savedName = localStorage.getItem('dual_info_name');
+      if (savedName && !hasWelcomed) {
+        // Pequeno delay para a animação começar antes de falar
+        setTimeout(() => {
+          speak(`Bem vindo novamente, ${savedName}`);
+        }, 300);
+        hasWelcomed = true;
+      }
+    }
+
+    nameInput.addEventListener('input', (e) => {
+      const val = e.target.value;
+      updateUI(val);
+      localStorage.setItem('dual_info_name', val);
+    });
+
+    function updateUI(name) {
+      bars[0].classList.toggle('active', name.length >= 3);
+      bars[1].classList.toggle('active', name.length >= 6);
+      bars[2].classList.toggle('active', name.length >= 9);
+
+      if (name.length > 0) {
+        const index = name.length % avatars.length;
+        avatar.innerText = avatars[index];
+        avatar.style.borderRadius = `${30 + (name.length * 2)}% ${70 - (name.length * 2)}% ${70 - (name.length * 2)}% ${30 + (name.length * 2)}%`;
+      } else {
+        avatar.innerText = "🧬";
+      }
+    }
+
+    btnActivate.onclick = (e) => {
+      // Evita propagação para o card não tentar "reabrir"
+      e.stopPropagation();
+      
+      const name = nameInput.value || "Dual";
+      artaskName.innerText = `${name}.Infodose`;
+      artaskOverlay.classList.add('show');
+      
+      typingText.innerText = "";
+      const fullText = "Sincronizando Trinity... Artask gerada.";
+      let i = 0;
+      const interval = setInterval(() => {
+        typingText.innerText += fullText[i];
+        i++;
+        if (i >= fullText.length) clearInterval(interval);
+      }, 40);
+
+      speak(`Iniciando sistema ${name}. Sincronização estabelecida.`);
+    };
+
+    function closeArtask() {
+      artaskOverlay.classList.remove('show');
+    }
+
+    function speak(text) {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'pt-BR';
+      u.rate = 1.1; 
+      u.pitch = 0.9;
+      
+      // Tenta encontrar uma voz PT-BR melhor
+      const voices = window.speechSynthesis.getVoices();
+      const ptVoice = voices.find(v => v.lang.includes('pt-BR'));
+      if(ptVoice) u.voice = ptVoice;
+
+      window.speechSynthesis.speak(u);
+    }
+  </script>
+</body>
+</html>

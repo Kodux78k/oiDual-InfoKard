@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dual.Infodose · Activation Panel v3.2</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#020406">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #020406;
+      --accent-blue: #4fd4ff;
+      --accent-purple: #a855f7;
+      --accent-gold: #f59e0b;
+      --glass: rgba(6, 10, 18, 0.9);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --radius-xl: 40px;
+      --font-main: 'Montserrat', sans-serif;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+
+    body {
+      margin: 0; padding: 0; min-height: 100vh;
+      background-color: var(--bg-dark); color: #fff;
+      font-family: var(--font-main);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Ambient Background */
+    .ambient-glow { position: fixed; inset: 0; z-index: -1; filter: blur(100px); opacity: 0.15; }
+    .blob { position: absolute; border-radius: 50%; animation: orbit 25s infinite linear; }
+    .blob-1 { width: 300px; height: 300px; background: var(--accent-blue); top: -5%; left: -5%; }
+    .blob-2 { width: 250px; height: 250px; background: var(--accent-purple); bottom: 5%; right: -5%; animation-duration: 15s; }
+    @keyframes orbit { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px, 60px) scale(1.1); } }
+
+    .container { width: 100%; max-width: 380px; padding: 20px; perspective: 1000px; }
+
+    /* The Accordion Hero Card */
+    .activation-card {
+      background: var(--glass);
+      backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+      text-align: center;
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      overflow: hidden;
+      max-height: 120px; /* Collapsed state */
+      cursor: pointer;
+    }
+
+    .activation-card.open {
+      max-height: 800px;
+      padding-top: 32px;
+      cursor: default;
+    }
+
+    /* Header & Branding */
+    .card-header { margin-bottom: 20px; transition: 0.3s; }
+    .brand-title { 
+      font-size: 0.65rem; font-weight: 800; letter-spacing: 4px; 
+      color: var(--accent-blue); text-transform: uppercase; margin-bottom: 4px; display: block;
+    }
+    .main-logo { font-size: 1.8rem; font-weight: 300; }
+    .main-logo b { font-weight: 800; color: #fff; }
+
+    /* Collapsed Hint */
+    .open-hint {
+      font-size: 0.7rem; font-weight: 600; opacity: 0.5;
+      margin-top: 10px; transition: 0.3s;
+    }
+    .open.activation-card .open-hint { opacity: 0; transform: translateY(-10px); visibility: hidden; }
+
+    /* Inner Content Visibility */
+    .card-body { opacity: 0; transform: translateY(20px); transition: all 0.5s 0.2s ease; pointer-events: none; }
+    .open .card-body { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+    /* Avatar Core */
+    .avatar-container {
+      width: 100px; height: 100px; margin: 0 auto 24px;
+      position: relative; display: flex; align-items: center; justify-content: center;
+    }
+    .avatar-core {
+      width: 70px; height: 70px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border-radius: 38%; box-shadow: 0 0 30px rgba(79, 212, 255, 0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem; transition: all 0.5s ease;
+    }
+
+    /* Fields */
+    .input-group { margin-bottom: 24px; position: relative; }
+    .name-input {
+      width: 100%; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px; padding: 14px;
+      font-family: var(--font-main); color: #fff;
+      font-size: 1rem; text-align: center;
+    }
+    .input-label {
+      position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+      background: #060a12; padding: 0 8px; font-size: 0.55rem;
+      font-weight: 800; color: var(--accent-blue);
+    }
+
+    /* Buttons */
+    .btn-main {
+      width: 100%; padding: 18px; border-radius: 18px;
+      border: none; cursor: pointer; font-weight: 800; font-size: 0.85rem;
+      background: #fff; color: #000; transition: 0.3s; margin-top: 10px;
+    }
+    .btn-main:active { transform: scale(0.96); }
+
+    /* Overlay Overlay */
+    .overlay {
+      position: absolute; inset: 0; background: #000; z-index: 20;
+      padding: 30px; display: flex; flex-direction: column;
+      transform: translateY(100%); transition: 0.6s cubic-bezier(0.8, 0, 0.2, 1);
+    }
+    .overlay.active { transform: translateY(0); }
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; text-align: left; line-height: 1.6; }
+
+  </style>
+</head>
+<body>
+
+  <div class="ambient-glow">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+  </div>
+
+  <div class="container">
+    <div class="activation-card" id="card" onclick="toggleCard(event)">
+      
+      <div class="card-header">
+        <span class="brand-title">Neural System</span>
+        <div class="main-logo">Dual.<b>Infodose</b></div>
+        <div class="open-hint">Toque para desbloquear</div>
+      </div>
+
+      <div class="card-body">
+        <div class="avatar-container">
+          <div class="avatar-core" id="avatar">🧬</div>
+        </div>
+
+        <div class="input-group">
+          <span class="input-label">CODINOME ASSISTENTE</span>
+          <input type="text" class="name-input" id="nameInput" placeholder="Ex: KODUX" maxlength="15" onclick="event.stopPropagation()">
+        </div>
+
+        <button class="btn-main" onclick="activateSystem(event)">ATIVAR PROTOCOLO</button>
+        
+        <p style="font-size: 0.65rem; opacity: 0.4; margin-top: 15px;">v3.2 • Trinity Engine 3-6-9</p>
+      </div>
+
+      <!-- Result Overlay -->
+      <div class="overlay" id="overlay">
+        <div class="mono">
+          <span style="color:var(--accent-blue)">> STATUS: SIMBIOSE ATIVA</span><br>
+          > Alvo: <span id="targetName">...</span><br>
+          > Artask gerada com sucesso.<br><br>
+          Envie o comando ao seu assistente no WhatsApp para sincronizar o fluxo.
+        </div>
+        <button class="btn-main" style="margin-top:auto; background:var(--accent-blue)" onclick="closeOverlay(event)">VOLTAR</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const card = document.getElementById('card');
+    const nameInput = document.getElementById('nameInput');
+    const avatar = document.getElementById('avatar');
+    const overlay = document.getElementById('overlay');
+    const targetName = document.getElementById('targetName');
+
+    const emojis = ["⚡", "🧠", "🧬", "📡", "🛸", "🪐", "💎", "🔋"];
+
+    // Inicialização
+    window.onload = () => {
+      const saved = localStorage.getItem('infodose_user');
+      if (saved) {
+        nameInput.value = saved;
+        updateAvatar(saved);
+        // TTS Boas-vindas retorno
+        setTimeout(() => {
+          speak(`Bem-vindo novamente, ${saved}. Sistema Infodose aguardando ativação.`);
+        }, 1000);
+      }
+    };
+
+    function toggleCard(e) {
+      if (!card.classList.contains('open')) {
+        card.classList.add('open');
+        speak("Acesso iniciado.");
+      }
+    }
+
+    nameInput.addEventListener('input', (e) => {
+      const val = e.target.value;
+      updateAvatar(val);
+      localStorage.setItem('infodose_user', val);
+    });
+
+    function updateAvatar(name) {
+      if (name.length > 0) {
+        const idx = name.length % emojis.length;
+        avatar.innerText = emojis[idx];
+        avatar.style.borderRadius = `${30 + (name.length * 2)}% ${70 - (name.length * 2)}% 50% 50%`;
+      } else {
+        avatar.innerText = "🧬";
+      }
+    }
+
+    function activateSystem(e) {
+      e.stopPropagation();
+      const user = nameInput.value || "Dual";
+      targetName.innerText = user + ".Infodose";
+      overlay.classList.add('active');
+      
+      const msg = `🔥 Artask A.Infodose\nUsuário: ${user}\nAssistente: ${user} Dual Infodose\nProtocolo Trinity 3-6-9 Ativado.`;
+      
+      speak(`Protocolo Infodose ativado para ${user}. Sincronizando com WhatsApp.`);
+      
+      // Abre link após delay
+      setTimeout(() => {
+        const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+        window.open(url, '_blank');
+      }, 1500);
+    }
+
+    function closeOverlay(e) {
+      e.stopPropagation();
+      overlay.classList.remove('active');
+    }
+
+    function speak(text) {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'pt-BR';
+      u.rate = 1.0;
+      u.pitch = 0.9;
+      window.speechSynthesis.speak(u);
+    }
+  </script>
+</body>
+</html>
