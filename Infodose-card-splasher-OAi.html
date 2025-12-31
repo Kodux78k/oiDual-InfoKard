@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>DUAL // FUSION — Refatorado (v15 + Infodose)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="theme-color" content="#030406">
+  <!-- Icon pack -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* =========================
+       VARIABLES & RESET
+       ========================= */
+    :root{
+      --bg-deep:#030406;
+      --glass-surface:rgba(18,18,22,0.9);
+      --glass-border:rgba(255,255,255,0.06);
+      --accent-blue:#00f2ff;
+      --accent-cyan:#38bdf8;
+      --accent-orange:#fb923c;
+      --accent-purple:#bd00ff;
+      --neon-green:#23ac51;
+      --neon-red:#ef4444;
+      --ease-elastic:cubic-bezier(0.34,1.3,0.64,1);
+      --font-ui:'Montserrat',sans-serif;
+      --font-code:'JetBrains Mono',monospace;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;outline:none}
+    html,body{height:100%}
+    body{
+      margin:0;padding:20px;font-family:var(--font-ui);color:#fff;background:var(--bg-deep);
+      background-image:radial-gradient(circle at 50% 0%, #1a1a2e 0%, #000 100%);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* =========================
+       LAYOUT
+       ========================= */
+    .layout{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:350px 1fr;gap:20px;align-items:start}
+    @media (max-width:900px){ .layout{grid-template-columns:1fr;padding:16px} }
+
+    /* SIDEBAR */
+    .fusion-card{position:sticky;top:20px;background:var(--glass-surface);border:1px solid var(--glass-border);border-radius:20px;padding:18px;backdrop-filter:blur(18px);z-index:100}
+    .card-header{display:flex;align-items:center;gap:12px;cursor:pointer}
+    .avatar-ring{width:46px;height:46px;border-radius:50%;padding:2px;background:conic-gradient(from 0deg,var(--accent-cyan),var(--accent-purple),var(--accent-cyan));animation:spin 12s linear infinite}
+    .avatar-inner{width:100%;height:100%;border-radius:50%;background:#000;display:flex;align-items:center;justify-content:center}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .brand{font-weight:800;font-size:1.05rem}
+    .status-label{font-size:0.65rem;color:var(--accent-cyan);font-family:var(--font-code)}
+
+    .recursive-block{overflow:hidden;max-height:0;opacity:0;transition:all .35s;display:flex;flex-direction:column;gap:10px}
+    .fusion-card.open .recursive-block{max-height:420px;opacity:1;margin-top:12px;padding-top:12px;border-top:1px solid #222}
+
+    .cyber-input{background:#0a0a0c;border:1px solid #333;border-radius:8px;padding:10px;color:#fff;font-family:var(--font-code)}
+
+    /* ACTION BAR */
+    .action-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px}
+    .filter-bar{display:flex;gap:8px;overflow-x:auto}
+    .filter-pill{padding:8px 12px;background:#111;border-radius:20px;font-weight:700;color:#666;cursor:pointer;border:1px solid #222}
+    .filter-pill.active{background:#fff;color:#000}
+
+    /* MASTER CARD / VAULT */
+    .master-card{background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:12px;margin-bottom:10px;overflow:hidden;transition:all .25s}
+    .vault-header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer}
+    .card-title{font-weight:700;color:#eee}
+    .card-meta{font-size:0.65rem;color:#777;font-family:var(--font-code);display:flex;gap:8px}
+    .tag-badge{background:#111;padding:2px 6px;border-radius:6px;color:var(--accent-cyan);border:1px solid #222}
+    .dock{display:flex;gap:6px;align-items:center}
+    .ico{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#777;background:transparent;border:1px solid transparent;cursor:pointer}
+    .ico:hover{background:#222;color:#fff}
+    .content-box{max-height:0;overflow:hidden;opacity:0;transition:all .4s var(--ease-elastic);background:#000;border-top:1px solid #222}
+    .master-card.expanded .content-box{max-height:900px;opacity:1;padding:12px}
+
+    .code-area{width:100%;background:#070707;border:1px solid #222;border-radius:8px;padding:12px;color:#ddd;font-family:var(--font-code);min-height:120px;resize:vertical}
+
+    /* FLOATING CARD */
+    .floating-card{position:fixed;width:480px;height:320px;border-radius:12px;background:rgba(8,8,10,0.97);border:1px solid #222;box-shadow:0 20px 60px rgba(0,0,0,.7);z-index:12000;display:flex;flex-direction:column;overflow:hidden;resize:both}
+    .float-header{background:#0f0f10;padding:10px 12px;border-bottom:1px solid #222;display:flex;justify-content:space-between;align-items:center;cursor:grab}
+    .float-title{font-weight:700;font-size:0.9rem;display:flex;align-items:center;gap:8px}
+    .float-body{flex:1;background:#000}
+
+    /* IMMERSIVE RUNTIME & UNIFIED */
+    #immersiveLayer{position:fixed;inset:0;background:#000;z-index:13000;transform:translateY(100%);transition:transform .45s var(--ease-elastic);display:flex;flex-direction:column}
+    #immersiveLayer.active{transform:translateY(0)}
+    .unified-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:14000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:all .25s}
+    .unified-overlay.active{opacity:1;pointer-events:all}
+    .unified-card{width:90%;height:86%;border-radius:14px;background:#050505;border:1px solid #333;padding:18px;display:flex;flex-direction:column}
+    .btn-main{padding:10px 16px;border-radius:8px;border:none;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+    .btn-main.primary{background:var(--accent-cyan);color:#000}
+    .btn-main.ghost{background:#222;color:#fff}
+    .muted{color:rgba(255,255,255,.45);font-size:.85rem}
+
+    /* INFODOSE HERO */
+    .infodose-hero{border-radius:12px;padding:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));border:1px solid rgba(255,255,255,0.03);margin-bottom:12px}
+    .infodose-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .infodose-avatar{width:66px;height:66px;border-radius:50%;overflow:hidden;background:#000}
+    .infodose-meta{display:flex;flex-direction:column}
+    .infodose-cycle{font-size:.7rem;color:var(--accent-cyan);font-weight:800;text-transform:uppercase}
+    .infodose-name{font-weight:800;font-size:1.05rem}
+    .infodose-trigger{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+    .infodose-accordion{display:grid;grid-template-rows:0fr;opacity:0;transition:all .4s}
+    .infodose-card.open .infodose-accordion{grid-template-rows:1fr;opacity:1;margin-top:10px}
+    .infodose-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .infodose-progress{margin-top:8px;background:rgba(0,0,0,.12);padding:10px;border-radius:8px}
+
+    /* small responsive tweaks */
+    @media (max-width:420px){
+      .floating-card{width:90%;height:260px}
+      .avatar-ring{display:none}
+    }
+
+  </style>
+</head>
+<body class="safe-mode">
+
+  <!-- SPLASH / INFODOSE SYNC (overlay) -->
+  <div id="splash" class="splash-overlay" style="position:fixed;inset:0;z-index:15000;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(3,4,6,0.9), rgba(5,7,10,0.95));gap:18px;padding:22px">
+    <div id="splashAvatar" style="width:120px;height:120px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#000;box-shadow:0 0 60px rgba(0,242,255,0.08)"></div>
+    <div style="text-align:center">
+      <div style="font-size:.8rem;letter-spacing:3px;opacity:.7;margin-bottom:8px">NEURAL LINK v6.0</div>
+      <div style="font-weight:300;font-size:1.6rem">Dual.<b style="font-weight:900;color:var(--accent-orange)">Infodose</b></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button id="syncBtn" class="btn-main primary"><i data-lucide="zap"></i> SINCRONIZAR</button>
+      <button id="bootBtn" class="btn-main ghost"><i data-lucide="power"></i> BOOT</button>
+    </div>
+  </div>
+
+  <!-- IMMERSIVE RUNTIME -->
+  <div id="immersiveLayer">
+    <div style="height:48px;background:#050505;border-bottom:1px solid #222;display:flex;align-items:center;justify-content:space-between;padding:0 16px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font-family:var(--font-code);color:var(--neon-green);font-size:.82rem">RUNTIME // ACTIVE</span><span class="muted raw-badge" style="display:none;background:var(--neon-red);color:#000;padding:2px 6px;border-radius:6px;font-weight:800">RAW MODE</span></div>
+      <button class="btn-main ghost" onclick="closeRuntime()" style="height:32px">FECHAR</button>
+    </div>
+    <div id="runtimeContainer" style="flex:1;background:#fff"></div>
+  </div>
+
+  <!-- UNIFIED EDITOR -->
+  <div id="unifiedOverlay" class="unified-overlay">
+    <div class="unified-card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2 style="margin:0;font-size:1.1rem;color:var(--accent-orange)">UNIFIED STACK VIEW</h2>
+        <div style="display:flex;gap:8px">
+          <button class="btn-main ghost" onclick="toggleUnified()">CANCELAR</button>
+          <button class="btn-main primary" onclick="saveUnified()">SALVAR COMO NOVO</button>
+        </div>
+      </div>
+      <textarea id="unifiedArea" class="code-area" style="flex:1;margin-top:10px"></textarea>
+    </div>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside>
+      <div class="fusion-card" id="mainCard">
+        <div class="card-header" onclick="toggleMenu()">
+          <div class="avatar-ring"><div class="avatar-inner"><i data-lucide="zap" size="18"></i></div></div>
+          <div style="flex:1">
+            <div class="brand">DUAL // CORE</div>
+            <div class="status-label">v15.0 OMNI-STACK</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="ico" id="rawToggleBtn" title="Toggle RAW/SAFE Mode" onclick="toggleRawMode()"><i data-lucide="shield-check" id="rawIcon"></i></button>
+            <button class="ico" onclick="toggleMenu()"><i data-lucide="chevron-down" id="chevronIcon"></i></button>
+          </div>
+        </div>
+
+        <div class="recursive-block">
+          <label style="font-size:.7rem;color:#999;font-weight:700">KERNEL USER</label>
+          <input id="kernelUser" class="cyber-input" value="ADMIN_User_01">
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn-main ghost" style="flex:1" onclick="document.getElementById('fileIn').click()">UPLOAD</button>
+            <input id="fileIn" type="file" hidden onchange="handleFile(event)">
+          </div>
+          <div id="fileInfo" style="font-size:.75rem;color:var(--accent-cyan);margin-top:6px"></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <main>
+      <div class="action-bar">
+        <div class="filter-bar">
+          <div class="filter-pill active" onclick="setFilter('ALL', this)">TODOS</div>
+          <div class="filter-pill" onclick="setFilter('APP', this)">APPS</div>
+          <div class="filter-pill" onclick="setFilter('GROUP', this)">GRUPOS</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-main ghost" onclick="openUnifiedView()"><i data-lucide="layers"></i> UNIFY ALL</button>
+        </div>
+      </div>
+
+      <!-- Infodose hero integrated -->
+      <div id="infodoseCard" class="infodose-hero infodose-card">
+        <div class="infodose-header">
+          <div style="display:flex;gap:12px;align-items:center">
+            <div id="heroAvatar" class="infodose-avatar"></div>
+            <div class="infodose-meta">
+              <div id="heroCycle" class="infodose-cycle">AGUARDANDO SYNC...</div>
+              <div id="heroName" class="infodose-name">Olá, Dual</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div id="heroTime" style="font-weight:700;font-family:var(--font-code)">--:--</div>
+            <div id="heroDate" class="muted">-- ---</div>
+          </div>
+        </div>
+
+        <div class="infodose-trigger">
+          <div>
+            <div style="font-size:.8rem;color:var(--accent-orange);font-weight:800">Status do Sistema</div>
+            <div id="heroPhrase" style="font-weight:700">Toque para Expandir</div>
+          </div>
+          <div>
+            <button id="heroToggle" class="btn-main ghost"><i data-lucide="plus" id="heroToggleIcon"></i></button>
+          </div>
+        </div>
+
+        <div id="heroAccordion" class="infodose-accordion">
+          <div class="infodose-stats">
+            <div style="background:rgba(255,255,255,0.03);padding:10px;border-radius:8px">
+              <div style="font-size:.65rem;color:rgba(255,255,255,.45)">ID Usuário</div>
+              <div id="infoId" style="font-weight:800">DUAL-78K</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03);padding:10px;border-radius:8px">
+              <div style="font-size:.65rem;color:rgba(255,255,255,.45)">Frequência</div>
+              <div id="infoFreq" style="font-weight:800">14.2 Hz</div>
+            </div>
+          </div>
+
+          <div class="infodose-progress">
+            <div style="height:8px;background:rgba(255,255,255,0.06);border-radius:8px;overflow:hidden">
+              <div id="heroProgress" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent-cyan),var(--accent-purple));transition:width .9s"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:8px;font-family:var(--font-code);font-size:.75rem;color:rgba(255,255,255,.5)">
+              <span>06:00</span><span id="heroProgressText">PROGRESSO DO DIA</span><span>23:00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Creator -->
+      <div class="master-card" id="creatorCard" style="border-style:dashed;border-color:#333">
+        <div class="vault-header" onclick="toggleCreator()">
+          <span class="card-title" style="color:var(--accent-cyan)">+ NOVO STACK</span>
+          <i data-lucide="plus"></i>
+        </div>
+        <div class="content-box">
+          <div style="padding:12px">
+            <textarea id="creatorContent" class="code-area" placeholder="Cole código HTML/JS aqui..." style="margin-bottom:10px"></textarea>
+            <div style="display:flex;gap:8px">
+              <input id="creatorTag" class="cyber-input" style="flex:0.3" placeholder="TAG">
+              <button class="btn-main primary" style="flex:0.7" onclick="saveStack()">SALVAR</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vault -->
+      <div id="vaultList"></div>
+    </main>
+  </div>
+
+  <!-- ============== SCRIPT (modular, ES module style) ============== -->
+  <script type="module">
+    // -----------------
+    // Constants & State
+    // -----------------
+    const STORAGE_KEY = 'fusion_stacks_v15';
+    let stacks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    let currentFilter = 'ALL';
+    let rawMode = false;
+    let selectedIds = new Set();
+    let zIndexCounter = 12001;
+    const iconsInit = () => lucide.createIcons();
+
+    // DOM refs
+    const refs = {
+      splash: document.getElementById('splash'),
+      splashAvatar: document.getElementById('splashAvatar'),
+      syncBtn: document.getElementById('syncBtn'),
+      bootBtn: document.getElementById('bootBtn'),
+      heroAvatar: document.getElementById('heroAvatar'),
+      heroCycle: document.getElementById('heroCycle'),
+      heroName: document.getElementById('heroName'),
+      heroTime: document.getElementById('heroTime'),
+      heroDate: document.getElementById('heroDate'),
+      heroPhrase: document.getElementById('heroPhrase'),
+      heroProgress: document.getElementById('heroProgress'),
+      heroProgressText: document.getElementById('heroProgressText'),
+      heroToggle: document.getElementById('heroToggle'),
+      heroToggleIcon: document.getElementById('heroToggleIcon'),
+      vaultList: document.getElementById('vaultList'),
+      creatorContent: document.getElementById('creatorContent'),
+      creatorTag: document.getElementById('creatorTag'),
+      unifiedOverlay: document.getElementById('unifiedOverlay'),
+      unifiedArea: document.getElementById('unifiedArea'),
+      immersiveLayer: document.getElementById('immersiveLayer'),
+      runtimeContainer: document.getElementById('runtimeContainer'),
+      rawIcon: document.getElementById('rawIcon'),
+      rawToggleBtn: document.getElementById('rawToggleBtn'),
+      kernelUser: document.getElementById('kernelUser'),
+      fileIn: document.getElementById('fileIn'),
+      fileInfo: document.getElementById('fileInfo'),
+      creatorCard: document.getElementById('creatorCard'),
+      mainCard: document.getElementById('mainCard')
+    };
+
+    iconsInit();
+
+    // -----------------
+    // Utilities
+    // -----------------
+    const persist = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(stacks));
+    const escapeHtml = str => (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+
+    function uid(){ return Date.now() + Math.floor(Math.random()*1000); }
+
+    // -----------------
+    // Avatar / Splash
+    // -----------------
+    function avatarSVG(seed, c1='#00f2ff', c2='#bd00ff'){
+      return `
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="g${seed}" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="${c1}"/>
+              <stop offset="100%" stop-color="${c2}"/>
+            </linearGradient>
+            <filter id="f${seed}"><feGaussianBlur stdDeviation="3"/></filter>
+          </defs>
+          <rect width="100" height="100" fill="#080b12"/>
+          <circle cx="50" cy="50" r="42" stroke="url(#g${seed})" stroke-width="2" fill="none" opacity="0.28"/>
+          <circle cx="50" cy="50" r="24" fill="url(#g${seed})" filter="url(#f${seed})"/>
+          <text x="50" y="56" font-family="Montserrat, Arial" font-weight="700" font-size="18" fill="#fff" text-anchor="middle">DI</text>
+        </svg>`;
+    }
+
+    refs.splashAvatar.innerHTML = avatarSVG('SPL');
+    refs.heroAvatar.innerHTML = avatarSVG('H1', '#38bdf8', '#fb923c');
+
+    // Fly-in animation (clone -> move)
+    async function flyToTargets(){
+      const start = refs.splashAvatar.getBoundingClientRect();
+      const heroRect = refs.heroAvatar.getBoundingClientRect();
+      const clone = refs.splashAvatar.cloneNode(true);
+      Object.assign(clone.style, {
+        position:'fixed', left: start.left + 'px', top: start.top + 'px',
+        width: start.width + 'px', height: start.height + 'px', zIndex:99999, borderRadius:'50%', pointerEvents:'none'
+      });
+      document.body.appendChild(clone);
+      refs.splash.classList.add('hidden');
+
+      const deltaX = heroRect.left - start.left;
+      const deltaY = heroRect.top - start.top;
+      const scale = heroRect.width / start.width;
+
+      const anim = clone.animate([
+        { transform:'translate(0,0) scale(1)' },
+        { transform:`translate(${deltaX}px, ${deltaY}px) scale(${scale})` }
+      ], { duration:900, easing:'cubic-bezier(0.34,1.56,0.64,1)', fill:'forwards' });
+
+      try{ await anim.finished } catch(e){}
+      clone.remove();
+      refs.heroAvatar.classList.add('shown');
+      speak('Sincronização completa. Bem vindo, Dual.');
+      updateAll();
+    }
+
+    refs.syncBtn.addEventListener('click', flyToTargets);
+    refs.bootBtn.addEventListener('click', async () => { speak('Booting...'); await flyToTargets(); });
+
+    // Simple TTS helper
+    function speak(text){
+      if(!('speechSynthesis' in window)) return;
+      try{ window.speechSynthesis.cancel(); if(text){ const u=new SpeechSynthesisUtterance(text); u.lang='pt-BR'; u.rate=1; window.speechSynthesis.speak(u); } }catch(e){}
+    }
+
+    // -----------------
+    // Infodose: clock & progress
+    // -----------------
+    function updateAll(){
+      const now = new Date();
+      refs.heroTime.textContent = now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+      refs.heroDate.textContent = now.toLocaleDateString('pt-BR', {day:'numeric', month:'short'}).toUpperCase();
+      const h = now.getHours();
+      let key = 'evening';
+      if(h>=5 && h<12) key='morning'; else if(h>=12 && h<18) key='afternoon';
+      const CONFIG = { morning:{label:'Fase de Ascensão', phrase:'Energia Alta'}, afternoon:{label:'Pico de Foco', phrase:'Fluxo Intenso'}, evening:{label:'Ciclo de Síntese', phrase:'Restauração'} };
+      refs.heroCycle.textContent = CONFIG[key].label;
+      if(!document.getElementById('infodoseCard').classList.contains('open')) refs.heroPhrase.textContent = CONFIG[key].phrase;
+
+      const start = 6, end = 23;
+      const current = now.getHours() + now.getMinutes()/60;
+      let pct = ((current - start) / (end - start)) * 100;
+      pct = Math.max(0, Math.min(100, pct));
+      refs.heroProgress.style.width = pct + '%';
+      refs.heroProgressText.textContent = `${Math.floor(pct)}% DO CICLO`;
+    }
+    setInterval(updateAll, 10000);
+    updateAll();
+
+    refs.heroToggle.addEventListener('click', () => {
+      const card = document.getElementById('infodoseCard');
+      card.classList.toggle('open');
+      const isOpen = card.classList.contains('open');
+      refs.heroToggleIcon.setAttribute('data-lucide', isOpen ? 'minus' : 'plus');
+      iconsInit();
+      if(isOpen) speak('Expandindo métricas vitais.'); else speak('Recolhendo métricas.');
+    });
+
+    // -----------------
+    // Vault rendering & actions
+    // -----------------
+    function renderVault(){
+      const list = refs.vaultList;
+      let filtered = stacks.filter(s => !s.groupId);
+      if(currentFilter === 'GROUP') filtered = filtered.filter(s => s.type === 'group');
+      if(currentFilter !== 'ALL' && currentFilter !== 'GROUP') filtered = filtered.filter(s => s.tag === currentFilter);
+      if(!filtered.length){ list.innerHTML = '<div style="text-align:center;padding:40px;color:#333;font-weight:bold">VAULT VAZIO</div>'; return; }
+
+      list.innerHTML = filtered.map(s => s.type === 'group' ? renderGroup(s) : renderItem(s)).join('');
+      iconsInit();
+    }
+
+    function renderItem(s, isInsideGroup=false){
+      const checked = selectedIds.has(s.id) ? 'checked' : '';
+      return `
+        <div class="master-card" id="stack-${s.id}">
+          <div class="vault-header" onclick="toggleAccordion(${s.id})">
+            <div style="flex:1;overflow:hidden">
+              <div class="card-title">${escapeHtml(s.title)}</div>
+              <div class="card-meta"><span class="tag-badge">${s.tag}</span><span>${s.date}</span></div>
+            </div>
+            <div class="dock" onclick="event.stopPropagation()">
+              <button class="ico ico-run" title="Rodar" onclick="runStack(${s.id})"><i data-lucide="play"></i></button>
+              <button class="ico" title="Detach" onclick="floatStack(${s.id})"><i data-lucide="picture-in-picture-2"></i></button>
+              <button class="ico" title="Pop-out" onclick="popoutStack(${s.id})"><i data-lucide="external-link"></i></button>
+              ${isInsideGroup ? `<button class="ico" title="Desagrupar" onclick="ungroupItem(${s.id})"><i data-lucide="log-out"></i></button>` : `<button class="ico ico-del" title="Apagar" onclick="deleteStack(${s.id})"><i data-lucide="trash-2"></i></button>`}
+            </div>
+          </div>
+          <div class="content-box">
+            <div style="padding:8px">
+              <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px">
+                <button class="btn-main ghost" onclick="copyStack(${s.id})">COPIAR</button>
+                <button class="btn-main ghost" onclick="updateStack(${s.id})">SALVAR</button>
+              </div>
+              <textarea id="code-${s.id}" class="code-area" spellcheck="false">${escapeHtml(s.content)}</textarea>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderGroup(group){
+      const children = stacks.filter(s => s.groupId === group.id);
+      return `
+        <div class="master-card is-group" id="stack-${group.id}">
+          <div class="vault-header" onclick="toggleAccordion(${group.id})">
+            <div style="display:flex;align-items:center;gap:8px">
+              <i data-lucide="folder"></i>
+              <div style="overflow:hidden">
+                <div class="card-title">${escapeHtml(group.title)}</div>
+                <div class="card-meta"><span class="tag-badge">GRUPO</span><span>${children.length} ITENS</span></div>
+              </div>
+            </div>
+            <div class="dock" onclick="event.stopPropagation()">
+              <button class="ico ico-del" onclick="deleteStack(${group.id})"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+          <div class="content-box"><div style="padding:8px">${children.length ? children.map(c => renderItem(c,true)).join('') : '<div style="padding:10px;color:#555">Vazio</div>'}</div></div>
+        </div>
+      `;
+    }
+
+    // Accordion toggle (exposed globally)
+    window.toggleAccordion = id => {
+      const el = document.getElementById(`stack-${id}`);
+      if(!el) return;
+      el.classList.toggle('expanded');
+    };
+
+    // -----------------
+    // CRUD & helpers
+    // -----------------
+    window.saveStack = () => {
+      const content = refs.creatorContent.value;
+      const tag = (refs.creatorTag.value || 'APP').toUpperCase();
+      if(!content) return alert('Conteúdo vazio');
+      const titleMatch = content.match(/<title>(.*?)<\/title>/i);
+      const title = titleMatch ? titleMatch[1] : `Stack ${stacks.length + 1}`;
+      stacks.unshift({ id: uid(), title, content, tag, date: new Date().toLocaleDateString('pt-BR') });
+      persist();
+      renderVault();
+      refs.creatorContent.value = '';
+      // collapse creator
+      if(refs.creatorCard.classList.contains('expanded')) refs.creatorCard.classList.remove('expanded');
+    };
+
+    window.deleteStack = id => {
+      if(!confirm('Deletar permanentemente?')) return;
+      const item = stacks.find(s => s.id === id);
+      if(item && item.type === 'group') { stacks.forEach(c => { if(c.groupId === id) delete c.groupId; }); }
+      stacks = stacks.filter(s => s.id !== id);
+      persist(); renderVault();
+    };
+
+    window.updateStack = id => {
+      const newVal = document.getElementById(`code-${id}`).value;
+      const idx = stacks.findIndex(s => s.id === id);
+      if(idx > -1){ stacks[idx].content = newVal; persist(); alert('Salvo!'); }
+    };
+
+    window.copyStack = id => {
+      const s = stacks.find(s => s.id === id);
+      navigator.clipboard.writeText(s.content);
+      alert('Copiado');
+    };
+
+    // grouping helpers
+    window.groupSelected = () => {
+      if(selectedIds.size < 1) return;
+      const groupId = uid();
+      const groupTitle = prompt('Nome do Grupo:', 'Nova Stack');
+      if(!groupTitle) return;
+      stacks.unshift({ id: groupId, type: 'group', title: groupTitle, date: new Date().toLocaleDateString('pt-BR'), tag: 'GROUP', content: '' });
+      stacks.forEach(s => { if(selectedIds.has(s.id)) s.groupId = groupId; });
+      selectedIds.clear(); persist(); renderVault();
+    };
+
+    window.ungroupItem = id => {
+      const idx = stacks.findIndex(s => s.id === id);
+      if(idx > -1){ delete stacks[idx].groupId; persist(); renderVault(); }
+    };
+
+    // batch selection UI (checkboxes)
+    window.toggleSelect = (e, id) => {
+      e.stopPropagation();
+      if(selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
+      // batch UI could be updated here (not shown to keep minimal)
+    };
+
+    window.deleteSelected = () => {
+      if(!confirm(`Deletar ${selectedIds.size} itens?`)) return;
+      stacks = stacks.filter(s => !selectedIds.has(s.id));
+      selectedIds.clear(); persist(); renderVault();
+    };
+
+    // -----------------
+    // Runtime & sandbox
+    // -----------------
+    window.runStack = id => {
+      const s = stacks.find(x => x.id === id);
+      const container = refs.runtimeContainer;
+      container.innerHTML = '';
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'width:100%;height:100%;border:none;';
+      if(!rawMode){
+        iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-modals allow-pointer-lock allow-popups allow-presentation allow-same-origin allow-top-navigation-by-user-activation');
+      }
+      iframe.srcdoc = s.content;
+      container.appendChild(iframe);
+      refs.immersiveLayer.classList.add('active');
+    };
+
+    window.closeRuntime = () => {
+      refs.immersiveLayer.classList.remove('active');
+      setTimeout(()=> refs.runtimeContainer.innerHTML = '', 500);
+    };
+
+    // float (detached) stack
+    window.floatStack = id => {
+      const s = stacks.find(x => x.id === id);
+      const el = document.createElement('div');
+      el.className = 'floating-card';
+      el.style.left = '50px'; el.style.top = '50px'; el.style.zIndex = ++zIndexCounter;
+      const sandboxAttr = rawMode ? '' : 'sandbox="allow-scripts allow-forms allow-modals allow-same-origin"';
+      el.innerHTML = `
+        <div class="float-header" onmousedown="dragStart(event, this.parentElement)">
+          <div class="float-title"><i data-lucide="zap"></i>${escapeHtml(s.title)}</div>
+          <div><button class="float-btn" onclick="this.closest('.floating-card').remove()">✕</button></div>
+        </div>
+        <div class="float-body"><iframe class="float-iframe" style="width:100%;height:100%;border:none" ${sandboxAttr} srcdoc="${escapeHtml(s.content)}"></iframe></div>
+      `;
+      el.onmousedown = () => el.style.zIndex = ++zIndexCounter;
+      document.body.appendChild(el);
+      iconsInit();
+    };
+
+    window.popoutStack = id => {
+      const s = stacks.find(x => x.id === id);
+      const w = window.open('', '_blank', 'width=900,height=700');
+      w.document.write(s.content); w.document.close();
+    };
+
+    // -----------------
+    // Drag support (floating cards)
+    // -----------------
+    let dragItem = null, dragOffset = {x:0,y:0};
+    window.dragStart = (e, item) => {
+      if(e.target.tagName === 'BUTTON') return;
+      dragItem = item;
+      const rect = item.getBoundingClientRect();
+      dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      document.addEventListener('mousemove', dragMove);
+      document.addEventListener('mouseup', dragEnd);
+    };
+    function dragMove(e){
+      if(!dragItem) return;
+      dragItem.style.left = (e.clientX - dragOffset.x) + 'px';
+      dragItem.style.top = (e.clientY - dragOffset.y) + 'px';
+    }
+    function dragEnd(){ dragItem = null; document.removeEventListener('mousemove', dragMove); document.removeEventListener('mouseup', dragEnd); }
+
+    // -----------------
+    // Raw / Safe toggle
+    // -----------------
+    function setRawMode(on){
+      rawMode = !!on;
+      document.body.classList.toggle('raw-mode', rawMode);
+      document.body.classList.toggle('safe-mode', !rawMode);
+      refs.rawIcon.setAttribute('data-lucide', rawMode ? 'shield-alert' : 'shield-check');
+      iconsInit();
+      const badge = document.querySelector('.raw-badge');
+      if(badge) badge.style.display = rawMode ? 'inline-block' : 'none';
+    }
+    window.toggleRawMode = () => setRawMode(!rawMode);
+
+    // -----------------
+    // Unified view
+    // -----------------
+    window.openUnifiedView = () => {
+      const filtered = stacks.filter(s => !s.groupId && s.type !== 'group');
+      if(!filtered.length) return alert('Nada para unificar.');
+      const combined = filtered.map(s => `<!-- STACK: ${s.title} -->\n${s.content}\n\n`).join('<!-- SEPARATOR -->\n\n');
+      refs.unifiedArea.value = combined;
+      refs.unifiedOverlay.classList.add('active');
+    };
+    window.toggleUnified = () => refs.unifiedOverlay.classList.remove('active');
+    window.saveUnified = () => {
+      const content = refs.unifiedArea.value;
+      if(!content) return;
+      stacks.unshift({ id: uid(), title: 'Unified '+new Date().toLocaleTimeString(), content, tag:'GROUP', date:new Date().toLocaleDateString('pt-BR'), type:'group' });
+      persist(); renderVault(); toggleUnified();
+    };
+
+    // -----------------
+    // File upload -> creator
+    // -----------------
+    refs.fileIn.addEventListener('change', handleFile);
+    function handleFile(ev){
+      const f = ev.target.files?.[0];
+      if(!f) return;
+      const r = new FileReader();
+      r.onload = e => { refs.creatorContent.value = e.target.result; if(!refs.creatorCard.classList.contains('expanded')) refs.creatorCard.classList.add('expanded'); refs.fileInfo.textContent = f.name; };
+      r.readAsText(f);
+    }
+
+    // -----------------
+    // UI helpers
+    // -----------------
+    window.toggleCreator = () => refs.creatorCard.classList.toggle('expanded');
+    window.toggleMenu = () => { refs.mainCard.classList.toggle('open'); document.getElementById('chevronIcon').style.transform = refs.mainCard.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)'; };
+    window.setFilter = (tag, el) => { currentFilter = tag; document.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('active')); if(el) el.classList.add('active'); renderVault(); };
+
+    // -----------------
+    // Init & seeding
+    // -----------------
+    function init(){
+      iconsInit();
+      if(!stacks.length){
+        stacks.push({ id: uid(), title:'Demo: Hello Dual', content:'<html><body><h1 style="font-family:Arial">Hello Dual</h1></body></html>', tag:'APP', date:new Date().toLocaleDateString('pt-BR') });
+        persist();
+      }
+      renderVault();
+      updateAll();
+      // keyboard shortcut S to sync
+      window.addEventListener('keydown', e => { if(e.key === 's' || e.key === 'S') flyToTargets(); });
+    }
+    init();
+
+    // Expose small helpers to console (optional)
+    window._fusion = { stacks, persist, renderVault, setRawMode };
+
+  </script>
+</body>
+</html>

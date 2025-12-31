@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>INFINITY VAULT // v10</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#030406">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-deep: #030406;
+      --glass-surface: rgba(20, 20, 25, 0.6);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --neon-cyan: #00f2ff;
+      --neon-purple: #bd00ff;
+      --neon-orange: #f97316;
+      --ease-smooth: cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      margin: 0; padding: 20px 10px; min-height: 100vh;
+      background-color: var(--bg-deep); color: #fff;
+      font-family: 'Montserrat', sans-serif;
+      overflow-x: hidden;
+      display: flex; flex-direction: column; align-items: center; gap: 20px;
+      background-image: radial-gradient(circle at 50% 0%, rgba(20,20,30,1) 0%, rgba(3,4,6,1) 80%);
+    }
+
+    /* Ambient Blobs */
+    .blob { position: fixed; border-radius: 50%; filter: blur(90px); opacity: 0.15; z-index: -1; animation: float 20s infinite alternate; }
+    .b1 { width: 300px; height: 300px; background: var(--neon-cyan); top: -50px; left: -50px; }
+    .b2 { width: 350px; height: 350px; background: var(--neon-purple); bottom: -50px; right: -50px; animation-delay: -5s; }
+    @keyframes float { 0% { transform: translate(0,0); } 100% { transform: translate(30px,50px); } }
+
+    /* CARD SYSTEM (Morphing) */
+    .fusion-card {
+      width: 100%; max-width: 460px;
+      background: var(--glass-surface);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px; padding: 20px;
+      transition: all 0.4s var(--ease-smooth);
+      position: relative; overflow: hidden;
+    }
+    
+    .fusion-card.active-border { border-color: var(--neon-cyan); box-shadow: 0 0 20px rgba(0, 242, 255, 0.15); }
+
+    /* Header do Card */
+    .card-header { display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
+    .avatar-ring { 
+      width: 42px; height: 42px; border-radius: 50%; 
+      background: conic-gradient(from 0deg, var(--neon-cyan), var(--neon-purple), var(--neon-cyan));
+      padding: 2px; flex-shrink: 0;
+    }
+    .avatar-inner { width: 100%; height: 100%; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    
+    .header-info { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+    .brand { font-size: 0.95rem; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .status { font-size: 0.65rem; color: var(--neon-cyan); font-family: 'JetBrains Mono', monospace; display: flex; gap: 6px;}
+    .tag { opacity: 0.7; }
+
+    /* Controls Row */
+    .controls { display: flex; gap: 8px; margin-left: auto; }
+    .mini-btn {
+      width: 32px; height: 32px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.03); color: #ccc;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+    .mini-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .btn-run { color: var(--neon-cyan); border-color: rgba(0,242,255,0.3); }
+    .btn-del:hover { color: #ff5555; border-color: #ff5555; }
+
+    /* Content Area (Hidden by default) */
+    .content-area {
+      max-height: 0; overflow: hidden; opacity: 0;
+      transition: all 0.4s var(--ease-smooth);
+      margin-top: 0;
+    }
+    .fusion-card.open .content-area { max-height: 800px; opacity: 1; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); }
+
+    /* Cyber Inputs */
+    .cyber-input {
+      width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
+      border-radius: 12px; padding: 12px; color: #fff; 
+      font-family: 'JetBrains Mono'; font-size: 0.8rem; line-height: 1.4;
+      transition: 0.3s;
+    }
+    .cyber-input:focus { border-color: var(--neon-purple); }
+    
+    /* Warframe / Iframe Container */
+    .warframe-container {
+      width: 100%; height: 320px; border-radius: 12px;
+      background: #fff; margin-top: 10px; overflow: hidden;
+      display: none; animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Filter Bar */
+    .filter-bar { width: 100%; max-width: 460px; display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
+    .filter-pill {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+      padding: 6px 14px; border-radius: 16px; font-size: 0.7rem; font-family: 'JetBrains Mono';
+      cursor: pointer; transition: 0.3s; white-space: nowrap;
+    }
+    .filter-pill.active { background: var(--neon-cyan); color: #000; font-weight: bold; border-color: var(--neon-cyan); }
+
+  </style>
+</head>
+<body>
+
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+
+  <div class="fusion-card active-border" id="creatorCard">
+    <div class="card-header" onclick="toggleCard('creatorCard')">
+      <div class="avatar-ring">
+        <div class="avatar-inner">
+           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5" /></svg>
+        </div>
+      </div>
+      <div class="header-info">
+        <div class="brand">INFINITY // INJECTOR</div>
+        <div class="status">VAULT_READY • v10</div>
+      </div>
+      <div class="controls">
+        <div class="mini-btn btn-run" onclick="event.stopPropagation(); createFromClipboard()"><i data-lucide="clipboard"></i></div>
+      </div>
+    </div>
+    
+    <div class="content-area">
+      <textarea id="mainInput" class="cyber-input" rows="4" placeholder="Cole seu código ou texto aqui..."></textarea>
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <input id="groupInput" class="cyber-input" style="flex:1" placeholder="TAG (ex: APP, DOCS)">
+        <button class="mini-btn" style="width:auto; padding:0 15px; color:var(--neon-cyan); border-color:var(--neon-cyan)" onclick="saveCard()">
+          SALVAR STACK
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <div class="filter-pill active" onclick="setFilter('ALL', this)">ALL</div>
+    <div class="filter-pill" onclick="setFilter('APP', this)">APPS</div>
+    <div class="filter-pill" onclick="setFilter('DOCS', this)">DOCS</div>
+    <div class="filter-pill" onclick="setFilter('CLIPBOARD', this)">CLIPBOARD</div>
+  </div>
+
+  <div id="vaultList" style="width:100%; display:flex; flex-direction:column; align-items:center; gap:15px;"></div>
+
+  <script>
+    lucide.createIcons();
+    
+    // --- STATE ---
+    let items = JSON.parse(localStorage.getItem('infinity_vault_v10') || '[]');
+    let currentFilter = 'ALL';
+
+    // --- RENDERIZADOR ---
+    function render() {
+      const list = document.getElementById('vaultList');
+      list.innerHTML = '';
+      
+      const filtered = currentFilter === 'ALL' ? items : items.filter(i => (i.group || '').toUpperCase() === currentFilter);
+
+      filtered.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'fusion-card';
+        el.id = `card-${item.id}`;
+        
+        // Ícone baseado no grupo
+        let iconColor = 'var(--neon-cyan)';
+        if(item.group === 'APP') iconColor = 'var(--neon-purple)';
+        if(item.group === 'DOCS') iconColor = 'var(--neon-orange)';
+
+        el.innerHTML = `
+          <div class="card-header">
+            <div class="avatar-ring" style="background:conic-gradient(from 0deg, ${iconColor}, #fff, ${iconColor})">
+              <div class="avatar-inner">
+                <span style="font-size:10px; font-weight:bold;">${item.group ? item.group[0] : '#'}</span>
+              </div>
+            </div>
+            <div class="header-info" onclick="toggleCard('card-${item.id}')">
+              <div class="brand">${item.title}</div>
+              <div class="status">
+                <span class="tag">${item.date}</span>
+                <span class="tag" style="color:${iconColor}">${item.group || 'RAW'}</span>
+              </div>
+            </div>
+            <div class="controls">
+              <div class="mini-btn btn-run" title="Executar App / Preview" onclick="toggleWarframe(${item.id})">
+                <i data-lucide="play" size="14"></i>
+              </div>
+              <div class="mini-btn" title="Copiar" onclick="copyCard(${item.id})">
+                <i data-lucide="copy" size="14"></i>
+              </div>
+              <div class="mini-btn btn-del" title="Deletar" onclick="deleteCard(${item.id})">
+                <i data-lucide="trash-2" size="14"></i>
+              </div>
+            </div>
+          </div>
+          
+          <div class="content-area">
+            <textarea id="txt-${item.id}" class="cyber-input" rows="6" onchange="updateContent(${item.id}, this.value)">${item.content}</textarea>
+            
+            <div id="warframe-${item.id}" class="warframe-container"></div>
+            
+            <div style="display:flex; justify-content:flex-end; margin-top:5px">
+               <span style="font-size:0.6rem; opacity:0.5; font-family:'JetBrains Mono'">ID: ${item.id}</span>
+            </div>
+          </div>
+        `;
+        list.appendChild(el);
+      });
+      lucide.createIcons();
+    }
+
+    // --- CORE FUNCTIONS ---
+
+    // 1. Salvar
+    function saveCard() {
+      const content = document.getElementById('mainInput').value;
+      const group = document.getElementById('groupInput').value.toUpperCase() || 'RAW';
+      if(!content) return;
+
+      const lines = content.split('\n');
+      const title = lines[0].substring(0, 30).replace(/[<#]/g,'').trim() || "Untitled Stack";
+
+      const newItem = {
+        id: Date.now(),
+        title,
+        content,
+        group,
+        date: new Date().toLocaleDateString('pt-BR')
+      };
+
+      items.unshift(newItem);
+      updateStorage();
+      
+      // Reset UI
+      document.getElementById('mainInput').value = '';
+      document.getElementById('creatorCard').classList.remove('open');
+      render();
+    }
+
+    // 2. Clipboard Magic
+    async function createFromClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById('mainInput').value = text;
+        document.getElementById('creatorCard').classList.add('open');
+        document.getElementById('groupInput').focus();
+      } catch(e) { alert("Permissão de clipboard negada."); }
+    }
+
+    // 3. Warframe Logic (O Segredo do App)
+    function toggleWarframe(id) {
+      const container = document.getElementById(`warframe-${id}`);
+      const txtArea = document.getElementById(`txt-${id}`);
+      const item = items.find(i => i.id === id);
+
+      // Se estiver fechado ou vazio
+      if(container.style.display === 'none' || container.innerHTML === '') {
+        container.style.display = 'block';
+        txtArea.style.display = 'none'; // Esconde o código fonte
+        
+        // Criação Limpa do Iframe
+        container.innerHTML = '';
+        const iframe = document.createElement('iframe');
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        
+        // Sandbox Permissiva (Para seus Apps rodarem)
+        iframe.sandbox = "allow-scripts allow-forms allow-same-origin allow-modals";
+        
+        container.appendChild(iframe);
+
+        // Injeção Direta (Evita problemas de aspas)
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(item.content);
+        doc.close();
+
+      } else {
+        // Voltar para modo Edição
+        container.style.display = 'none';
+        container.innerHTML = ''; // Limpa memória
+        txtArea.style.display = 'block';
+      }
+    }
+
+    // 4. Utilidades
+    function toggleCard(id) {
+      const el = document.getElementById(id);
+      el.classList.toggle('open');
+    }
+
+    function updateContent(id, newContent) {
+      const item = items.find(i => i.id === id);
+      if(item) {
+        item.content = newContent;
+        updateStorage();
+      }
+    }
+
+    function deleteCard(id) {
+      if(confirm("Desmaterializar Stack?")) {
+        items = items.filter(i => i.id !== id);
+        updateStorage();
+        render();
+      }
+    }
+
+    function copyCard(id) {
+      const item = items.find(i => i.id === id);
+      navigator.clipboard.writeText(item.content);
+      alert("Código copiado para Buffer.");
+    }
+
+    function setFilter(filter, el) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      render();
+    }
+
+    function updateStorage() {
+      localStorage.setItem('infinity_vault_v10', JSON.stringify(items));
+    }
+
+    // Boot
+    render();
+
+  </script>
+</body>
+</html>

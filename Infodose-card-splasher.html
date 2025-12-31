@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>DUAL // FUSION — v15 Omni-Stack + Infodose</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#030406">
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==== CORE VARIABLES ==== */
+    :root { 
+      --bg-deep:#030406; --glass-surface:rgba(20,20,25,0.92); --glass-border:rgba(255,255,255,0.08);
+      --neon-cyan:#00f2ff; --neon-purple:#bd00ff; --neon-orange:#f97316; --neon-red:#ef4444;
+      --neon-green:#23ac51; --ease-elastic:cubic-bezier(0.34,1.3,0.64,1); --font-ui:'Montserrat',sans-serif; --font-code:'JetBrains Mono',monospace;
+    }
+    *{box-sizing:border-box;outline:none;-webkit-tap-highlight-color:transparent}
+    body{margin:0;padding:20px;min-height:100vh;background-color:var(--bg-deep);color:#fff;font-family:var(--font-ui);overflow-x:hidden;background-image:radial-gradient(circle at 50% 0%, #1a1a2e 0%, #000 100%);}
+    ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:0 0}::-webkit-scrollbar-thumb{background:#333;border-radius:10px}::-webkit-scrollbar-thumb:hover{background:var(--neon-cyan)}
+
+    /* ==== LAYOUT ==== */
+    .layout{width:100%;max-width:1400px;margin:0 auto;display:grid;grid-template-columns:350px 1fr;gap:20px;align-items:start}
+    @media (max-width:900px){.layout{grid-template-columns:1fr}}
+
+    /* ==== SIDEBAR ==== */
+    .fusion-card{position:sticky;top:20px;background:var(--glass-surface);border:1px solid var(--glass-border);border-radius:24px;padding:20px;backdrop-filter:blur(20px);z-index:100;transition:box-shadow .3s,border-color .3s}
+    .card-header{display:flex;align-items:center;gap:15px;cursor:pointer;user-select:none}
+    .avatar-ring{width:48px;height:48px;border-radius:50%;background:conic-gradient(from 0deg,var(--neon-cyan),var(--neon-purple),var(--neon-cyan));padding:2px;animation:spin 10s linear infinite}
+    .avatar-inner{width:100%;height:100%;background:#000;border-radius:50%;display:flex;align-items:center;justify-content:center}
+    @keyframes spin{100%{transform:rotate(360deg)}}
+    .brand{font-weight:800;font-size:1.2rem;letter-spacing:-1px}
+    .status-label{font-size:.6rem;color:var(--neon-cyan);font-family:var(--font-code)}
+    .raw-indicator{display:none;color:var(--neon-red);font-weight:bold;margin-left:5px}
+    body.raw-mode .raw-indicator{display:inline}
+    body.raw-mode .fusion-card{border-color:var(--neon-red);box-shadow:0 0 20px rgba(239,68,68,0.2)}
+    
+    .recursive-block{overflow:hidden;max-height:0;opacity:0;transition:.4s;display:flex;flex-direction:column;gap:10px}
+    .fusion-card.open .recursive-block{max-height:500px;opacity:1;margin-top:15px;padding-top:15px;border-top:1px solid #222}
+    .cyber-input{width:100%;background:#0a0a0c;border:1px solid #333;border-radius:8px;padding:10px;color:#fff;font-family:var(--font-code);font-size:.8rem;transition:.3s}
+    .cyber-input:focus{border-color:var(--neon-purple)}
+
+    /* ==== INFODOSE HERO ==== */
+    .infodose-hero { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12)); border-radius:16px; padding:16px; border:1px solid rgba(255,255,255,0.03); box-shadow:0 20px 60px rgba(0,0,0,0.6); margin-bottom:18px; position:relative; overflow:hidden; transition:max-height 0.5s ease; }
+    .infodose-header{display:flex;align-items:center;gap:12px;justify-content:space-between}
+    .infodose-avatar{width:64px;height:64px;border-radius:50%;overflow:hidden;background:#000}
+    .infodose-meta{flex:1;display:flex;flex-direction:column}
+    .infodose-cycle{font-size:.7rem;color:var(--neon-cyan);font-weight:800;text-transform:uppercase}
+    .infodose-name{font-weight:800;font-size:1.1rem}
+    .infodose-clock{text-align:right; font-family:var(--font-code)}
+    .infodose-trigger{margin-top:10px;display:flex;justify-content:space-between;gap:10px; cursor:pointer; padding:5px 0}
+    .infodose-accordion{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .6s var(--ease-elastic), opacity .4s}
+    .infodose-card.open .infodose-accordion{grid-template-rows:1fr;opacity:1;margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05)}
+    .infodose-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;overflow:hidden}
+    .infodose-progress{background:rgba(0,0,0,.3);padding:10px;border-radius:10px;overflow:hidden}
+
+    /* ==== SPLASH SCREEN ==== */
+    .splash-overlay{position:fixed;inset:0;z-index:14000;background:linear-gradient(180deg, rgba(3,4,6,1), rgba(5,7,10,1));display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;padding:24px; transition:opacity 0.8s ease, visibility 0.8s;}
+    .splash-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
+    .splash-avatar{width:120px;height:120px;border-radius:50%;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 60px rgba(0,242,255,0.12); position:relative;}
+
+    /* ==== STACK CARDS & GROUPS ==== */
+    .master-card{background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:12px;margin-bottom:8px;overflow:hidden;transition:all .3s ease;position:relative}
+    .master-card:hover{border-color:rgba(255,255,255,0.15);background:rgba(255,255,255,0.05)}
+    .master-card.expanded{border-color:var(--neon-cyan);background:rgba(0,0,0,0.4);box-shadow:0 4px 20px rgba(0,0,0,0.5)}
+    .master-card.expanded::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--neon-cyan)}
+    
+    .vault-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;cursor:pointer;user-select:none}
+    .header-left{display:flex;align-items:center;gap:12px;flex:1;overflow:hidden}
+    .card-title{font-weight:700;font-size:.95rem;color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .card-meta{font-size:.65rem;color:#666;font-family:var(--font-code);display:flex;gap:8px;margin-top:4px}
+    .tag-badge{background:#111;padding:2px 6px;border-radius:4px;color:var(--neon-cyan);border:1px solid #222}
+    
+    .is-group{border-style:dashed; border-color:#333;}
+    .is-group .card-title{color:var(--neon-purple)}
+    .group-container{padding:10px; background:rgba(0,0,0,0.3); border-top:1px solid #222}
+
+    .dock{display:flex;gap:4px;align-items:center}
+    .ico{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:0 0;color:#777;cursor:pointer;border:1px solid transparent;transition:.2s}
+    .ico:hover{background:#222;color:#fff}
+    .ico-run{color:var(--neon-green)}.ico-run:hover{background:rgba(35,172,81,.1)}
+    .ico-del:hover{background:rgba(239,68,68,.1);color:var(--neon-red)}
+
+    .content-box{max-height:0;overflow:hidden;opacity:0;transition:all .4s var(--ease-elastic);background:#000;border-top:1px solid #222}
+    .master-card.expanded .content-box{max-height:800px;opacity:1;padding:15px}
+    .code-area{width:100%;background:#080808;border:1px solid #222;border-radius:8px;padding:12px;color:#ccc;font-family:var(--font-code);font-size:.8rem;min-height:100px;resize:vertical}
+
+    /* ==== FLOATING & OVERLAYS ==== */
+    .floating-card{position:fixed;width:480px;height:320px;border-radius:16px;background:rgba(10,10,14,.95);border:1px solid #333;box-shadow:0 20px 60px rgba(0,0,0,.7);z-index:12000;overflow:hidden;resize:both;display:flex;flex-direction:column;animation:popIn .3s var(--ease-elastic)}
+    @keyframes popIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+    .float-header{background:#111;padding:10px 14px;border-bottom:1px solid #222;display:flex;justify-content:space-between;align-items:center;cursor:grab}
+    .float-header:active{cursor:grabbing;background:#161616}
+    .float-body{flex:1;background:#000;position:relative}
+
+    /* Unified Overlay */
+    .unified-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(5px);z-index:14000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.3s}
+    .unified-overlay.active{opacity:1;pointer-events:all}
+    .unified-card{width:90%;height:90%;background:#050505;border:1px solid #333;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:15px;box-shadow:0 0 100px rgba(0,0,0,.8)}
+
+    /* Runtime */
+    #immersiveLayer{position:fixed;inset:0;background:#000;z-index:13000;transform:translateY(100%);transition:transform .5s var(--ease-elastic);display:flex;flex-direction:column}
+    #immersiveLayer.active{transform:translateY(0)}
+
+    /* Components */
+    .btn-main{padding:10px 20px;border-radius:8px;border:none;font-weight:700;cursor:pointer;font-size:.8rem;display:flex;align-items:center;gap:8px;transition:.2s}
+    .btn-main.primary{background:var(--neon-cyan);color:#000}.btn-main.primary:hover{box-shadow:0 0 15px rgba(0,242,255,.4)}
+    .btn-main.ghost{background:#222;color:#fff}.btn-main.ghost:hover{background:#333}
+    .filter-pill{padding:6px 14px;background:#111;border-radius:20px;font-size:.7rem;font-weight:700;color:#666;cursor:pointer;border:1px solid #222;transition:.2s}
+    .filter-pill.active{background:#fff;color:#000}
+    .stack-checkbox{appearance:none;width:16px;height:16px;border:1px solid #444;border-radius:4px;background:#111;cursor:pointer;position:relative}
+    .stack-checkbox:checked{background:var(--neon-cyan);border-color:var(--neon-cyan)}
+    
+    .batch-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--neon-orange);color:#000;padding:10px 20px;border-radius:30px;display:flex;gap:15px;align-items:center;font-weight:800;transition:.4s var(--ease-elastic);z-index:1000}
+    .batch-bar.active{transform:translateX(-50%) translateY(0)}
+
+    .muted{color:rgba(255,255,255,0.45);font-size:.85rem}
+  </style>
+</head>
+<body class="safe-mode">
+
+  <div id="splash" class="splash-overlay" aria-hidden="false">
+    <div class="splash-avatar" id="splashAvatar"></div>
+    <div style="text-align:center">
+      <div style="font-size:.8rem;letter-spacing:3px;opacity:.7;margin-bottom:8px">NEURAL LINK v15.0</div>
+      <div style="font-weight:300;font-size:1.6rem">Dual.<b style="font-weight:900;color:var(--neon-cyan)">Omni</b></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn-main primary" id="syncBtn"><i data-lucide="zap"></i> SINCRONIZAR</button>
+      <button class="btn-main ghost" id="bootBtn"><i data-lucide="power"></i> SAFE BOOT</button>
+    </div>
+  </div>
+
+  <div id="immersiveLayer">
+    <div style="height:50px;background:#050505;border-bottom:1px solid #222;display:flex;align-items:center;justify-content:space-between;padding:0 20px;">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-family:var(--font-code);color:var(--neon-green);font-size:.8rem;">RUNTIME // ACTIVE</span>
+        <span class="raw-badge" style="font-size:.6rem;background:#333;padding:2px 6px;border-radius:4px">ESC TO CLOSE</span>
+      </div>
+      <button class="btn-main ghost" onclick="closeRuntime()" style="height:32px">FECHAR</button>
+    </div>
+    <div id="runtimeContainer" style="flex:1;background:#fff"></div>
+  </div>
+
+  <div class="unified-overlay" id="unifiedOverlay">
+    <div class="unified-card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2 style="margin:0;font-size:1.2rem;color:var(--neon-orange)">UNIFIED STACK VIEW</h2>
+        <div style="display:flex;gap:10px">
+          <button class="btn-main ghost" onclick="toggleUnified()">CANCELAR</button>
+          <button class="btn-main primary" onclick="saveUnified()">SALVAR COMO NOVO</button>
+        </div>
+      </div>
+      <textarea id="unifiedArea" class="code-area" style="flex:1;font-size:0.9rem;border-color:#333"></textarea>
+    </div>
+  </div>
+  
+  <div class="batch-bar" id="batchActions">
+    <span id="batchCount">0 SELECIONADOS</span>
+    <button class="btn-main ghost" style="background:rgba(0,0,0,0.2);color:#000;height:30px" onclick="groupSelected()">AGRUPAR</button>
+    <button class="btn-main ghost" style="background:rgba(0,0,0,0.2);color:#000;height:30px" onclick="deleteSelected()">DELETAR</button>
+  </div>
+
+  <div class="layout">
+
+    <aside>
+      <div class="fusion-card" id="mainCard">
+        <div class="card-header" onclick="toggleMenu()">
+          <div class="avatar-ring"><div class="avatar-inner"><i data-lucide="zap" size="18"></i></div></div>
+          <div style="flex:1">
+            <div class="brand">DUAL // CORE</div>
+            <div class="status-label">v15.0 OMNI-STACK <span class="raw-indicator">[RAW]</span></div>
+          </div>
+          <div style="display:flex;gap:5px" onclick="event.stopPropagation()">
+            <button class="ico" id="rawToggleBtn" onclick="toggleRawMode()" title="Toggle RAW/SAFE Mode"><i data-lucide="shield-check" id="rawIcon"></i></button>
+            <button class="ico" onclick="toggleMenu()"><i data-lucide="chevron-down" id="chevronIcon"></i></button>
+          </div>
+        </div>
+
+        <div class="recursive-block">
+          <label style="font-size:.7rem;color:#666;font-weight:bold">KERNEL USER</label>
+          <input type="text" class="cyber-input" id="kernelUser" value="ADMIN_User_01">
+          <div style="display:flex;gap:10px;margin-top:10px">
+            <button class="btn-main ghost" style="flex:1" onclick="document.getElementById('fileIn').click()">UPLOAD</button>
+            <input type="file" id="fileIn" hidden onchange="handleFile(event)">
+          </div>
+          <div id="fileInfo" style="font-size:.7rem;color:var(--neon-cyan);margin-top:5px"></div>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="action-bar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="display:flex;gap:8px">
+          <div class="filter-pill active" onclick="setFilter('ALL', this)">TODOS</div>
+          <div class="filter-pill" onclick="setFilter('APP', this)">APPS</div>
+          <div class="filter-pill" onclick="setFilter('GROUP', this)">GRUPOS</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn-main ghost" onclick="openUnifiedView()"><i data-lucide="layers"></i> UNIFY ALL</button>
+        </div>
+      </div>
+
+      <div class="infodose-hero infodose-card" id="infodoseCard">
+        <div class="infodose-header">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="infodose-avatar" id="heroAvatar"></div>
+            <div class="infodose-meta">
+              <div class="infodose-cycle" id="heroCycle">AGUARDANDO SYNC...</div>
+              <div class="infodose-name" id="heroName">Olá, Dual</div>
+            </div>
+          </div>
+          <div class="infodose-clock">
+            <div id="heroTime" style="font-weight:700; font-family:var(--font-code)">--:--</div>
+            <div id="heroDate" class="muted">-- ---</div>
+          </div>
+        </div>
+
+        <div class="infodose-trigger" id="heroToggle">
+          <div style="flex:1">
+            <div style="font-size:.8rem;color:var(--neon-orange);font-weight:800">Status do Sistema</div>
+            <div style="font-weight:700" id="heroPhrase">Toque para Expandir</div>
+          </div>
+          <div><i data-lucide="plus" id="heroToggleIcon"></i></div>
+        </div>
+
+        <div class="infodose-accordion" id="heroAccordion">
+          <div class="infodose-stats">
+            <div style="background:rgba(255,255,255,0.03);padding:10px;border-radius:8px">
+              <div style="font-size:.65rem;color:rgba(255,255,255,0.45)">ID Usuário</div>
+              <div style="font-weight:800" id="infoId">DUAL-78K</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03);padding:10px;border-radius:8px">
+              <div style="font-size:.65rem;color:rgba(255,255,255,0.45)">Frequência</div>
+              <div style="font-weight:800" id="infoFreq">14.2 Hz</div>
+            </div>
+          </div>
+
+          <div class="infodose-progress">
+            <div style="height:8px;background:rgba(255,255,255,0.06);border-radius:8px;overflow:hidden">
+              <div id="heroProgress" style="height:100%;width:0%;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-purple));transition:width:1s"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:8px;font-family:var(--font-code);font-size:.75rem;color:rgba(255,255,255,0.5)">
+              <span>06:00</span>
+              <span id="heroProgressText">PROGRESSO DO DIA</span>
+              <span>23:00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="master-card" id="creatorCard" style="border-style:dashed;border-color:#333;margin-bottom:12px">
+        <div class="vault-header" onclick="toggleCreator()">
+          <span class="card-title" style="color:var(--neon-cyan)">+ NOVO STACK</span>
+          <i data-lucide="plus"></i>
+        </div>
+        <div class="content-box">
+          <div class="content-inner">
+            <textarea id="creatorContent" class="code-area" placeholder="Cole código HTML/JS aqui..." style="margin-bottom:10px"></textarea>
+            <div style="display:flex;gap:10px">
+              <input id="creatorTag" class="cyber-input" style="flex:0.3" placeholder="TAG">
+              <button class="btn-main primary" style="flex:0.7" onclick="saveStack()">SALVAR</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="vaultList"></div>
+    </main>
+  </div>
+
+  <script>
+    // ==== ICONS ====
+    lucide.createIcons();
+
+    // ==== STORAGE & STATE ====
+    let stacks = JSON.parse(localStorage.getItem('fusion_stacks_v15') || '[]');
+    let currentFilter = 'ALL';
+    let rawMode = false; // "RAW" disables sandbox
+    let selectedIds = new Set();
+    let zIndexCounter = 12001;
+
+    // ==== INFODOSE & SPLASH ====
+    const splash = document.getElementById('splash');
+    const splashAvatar = document.getElementById('splashAvatar');
+    const syncBtn = document.getElementById('syncBtn');
+    const bootBtn = document.getElementById('bootBtn');
+
+    // Generate procedural avatar SVG
+    function avatarSVG(seed, c1='#00f2ff', c2='#bd00ff'){
+      return `
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="g${seed}" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="${c1}"></stop>
+              <stop offset="100%" stop-color="${c2}"></stop>
+            </linearGradient>
+            <filter id="f${seed}"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <rect width="100" height="100" fill="#080b12"/>
+          <circle cx="50" cy="50" r="42" stroke="url(#g${seed})" stroke-width="2" fill="none" opacity="0.28"/>
+          <circle cx="50" cy="50" r="24" fill="url(#g${seed})" filter="url(#f${seed})"/>
+          <text x="50" y="56" font-family="Montserrat, Arial" font-weight="700" font-size="18" fill="#fff" text-anchor="middle">DI</text>
+        </svg>
+      `;
+    }
+
+    // Render Avatars
+    splashAvatar.innerHTML = avatarSVG('SPL');
+    document.getElementById('heroAvatar').innerHTML = avatarSVG('H1', '#38bdf8', '#fb923c');
+
+    // Splash Animation Logic
+    async function flyToTargets(){
+      const startRect = splashAvatar.getBoundingClientRect();
+      const hero = document.getElementById('heroAvatar');
+      const endRect = hero.getBoundingClientRect();
+
+      const clone = splashAvatar.cloneNode(true);
+      clone.style.position = 'fixed'; 
+      clone.style.left = startRect.left + 'px'; 
+      clone.style.top = startRect.top + 'px';
+      clone.style.width = startRect.width + 'px'; 
+      clone.style.height = startRect.height + 'px';
+      clone.style.zIndex = 99999; 
+      clone.style.borderRadius = '50%'; 
+      clone.style.pointerEvents = 'none';
+      document.body.appendChild(clone);
+
+      splash.classList.add('hidden'); // Hide splash overlay
+
+      const deltaX = endRect.left - startRect.left;
+      const deltaY = endRect.top - startRect.top;
+      const scale = endRect.width / startRect.width;
+
+      const anim = clone.animate([
+        { transform: 'translate(0,0) scale(1)' },
+        { transform: `translate(${deltaX}px, ${deltaY}px) scale(${scale})` }
+      ], { duration: 900, easing: 'cubic-bezier(0.34,1.56,0.64,1)', fill: 'forwards' });
+
+      await anim.finished;
+      clone.remove();
+      
+      // Post-boot actions
+      speak('Sincronização completa. Bem vindo, Dual.');
+      updateAll();
+      const saved = localStorage.getItem('fusion_user');
+      if(!saved) document.getElementById('creatorContent').focus();
+    }
+
+    syncBtn.addEventListener('click', flyToTargets);
+    bootBtn.addEventListener('click', async ()=>{ speak('Booting Safe Mode...'); await flyToTargets(); });
+
+    function speak(txt){
+      if(!window.speechSynthesis) return;
+      try{ window.speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(txt); u.lang='pt-BR'; u.rate=1; window.speechSynthesis.speak(u); }catch(e){}
+    }
+
+    // ==== STACKS MANAGEMENT ====
+    const vaultList = document.getElementById('vaultList');
+
+    function persist(){ localStorage.setItem('fusion_stacks_v15', JSON.stringify(stacks)); }
+
+    function renderVault(){
+      // 1. Get Top Level items (items without groupId OR items that represent groups)
+      let filtered = stacks.filter(s => !s.groupId);
+      
+      // 2. Apply Filters
+      if(currentFilter === 'GROUP') filtered = filtered.filter(s => s.type === 'group');
+      if(currentFilter !== 'ALL' && currentFilter !== 'GROUP') filtered = filtered.filter(s => s.tag === currentFilter);
+
+      if(!filtered.length){ vaultList.innerHTML = `<div style="text-align:center;padding:40px;color:#333;font-weight:bold">VAULT VAZIO</div>`; return; }
+
+      vaultList.innerHTML = filtered.map(s => s.type === 'group' ? renderGroup(s) : renderItem(s)).join('');
+      lucide.createIcons();
+    }
+
+    function renderItem(s, isInsideGroup=false){
+      const checked = selectedIds.has(s.id) ? 'checked' : '';
+      return `
+        <div class="master-card" id="stack-${s.id}">
+          <div class="vault-header" onclick="toggleAccordion(${s.id})">
+            <div class="header-left">
+              <input type="checkbox" class="stack-checkbox" onclick="toggleSelect(event, ${s.id})" ${checked}>
+              <div style="overflow:hidden;">
+                <span class="card-title">${escapeHtml(s.title)}</span>
+                <div class="card-meta"><span class="tag-badge">${s.tag}</span><span>${s.date}</span></div>
+              </div>
+            </div>
+            <div class="dock" onclick="event.stopPropagation()">
+              <button class="ico ico-run" title="Rodar" onclick="runStack(${s.id})"><i data-lucide="play"></i></button>
+              <button class="ico" title="Detach" onclick="floatStack(${s.id})"><i data-lucide="picture-in-picture-2"></i></button>
+              <button class="ico" title="Pop-out" onclick="popoutStack(${s.id})"><i data-lucide="external-link"></i></button>
+              ${isInsideGroup ? `<button class="ico" title="Desagrupar" onclick="ungroupItem(${s.id})"><i data-lucide="log-out"></i></button>` : `<button class="ico ico-del" title="Apagar" onclick="deleteStack(${s.id})"><i data-lucide="trash-2"></i></button>`}
+            </div>
+          </div>
+          <div class="content-box">
+            <div class="content-inner">
+              <div style="display:flex;justify-content:flex-end;padding-bottom:10px;gap:10px">
+                <button class="btn-main ghost" style="height:30px;font-size:.7rem" onclick="copyStack(${s.id})">COPIAR</button>
+                <button class="btn-main ghost" style="height:30px;font-size:.7rem" onclick="updateStack(${s.id})">SALVAR</button>
+              </div>
+              <textarea id="code-${s.id}" class="code-area" spellcheck="false">${escapeHtml(s.content)}</textarea>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderGroup(g){
+      const children = stacks.filter(s => s.groupId === g.id);
+      return `
+        <div class="master-card is-group" id="stack-${g.id}">
+          <div class="vault-header" onclick="toggleAccordion(${g.id})">
+            <div class="header-left">
+              <i data-lucide="folder" size="20" color="var(--neon-purple)"></i>
+              <div style="overflow:hidden;">
+                <span class="card-title">${escapeHtml(g.title)}</span>
+                <div class="card-meta"><span class="tag-badge">GRUPO</span><span>${children.length} ITENS</span></div>
+              </div>
+            </div>
+            <div class="dock" onclick="event.stopPropagation()">
+              <button class="ico ico-del" title="Apagar Grupo" onclick="deleteStack(${g.id})"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+          <div class="content-box">
+             <div class="group-container">
+               ${children.length ? children.map(c => renderItem(c, true)).join('') : '<div style="padding:10px;color:#555;font-size:.8rem">Grupo Vazio</div>'}
+             </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Logic
+    function toggleAccordion(id){ const el = document.getElementById(`stack-${id}`); if(el) el.classList.toggle('expanded'); }
+    function toggleMenu(){ document.getElementById('mainCard').classList.toggle('open'); document.getElementById('chevronIcon').style.transform = document.getElementById('mainCard').classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)'; }
+    function toggleCreator(){ document.getElementById('creatorCard').classList.toggle('expanded'); }
+
+    // Batch Actions
+    function toggleSelect(e,id){ e.stopPropagation(); if(selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id); updateBatchUI(); }
+    function updateBatchUI(){ 
+      const el=document.getElementById('batchActions'); 
+      const count = document.getElementById('batchCount');
+      if(selectedIds.size>0) { el.classList.add('active'); count.textContent=`${selectedIds.size} STACKS`; } 
+      else el.classList.remove('active'); 
+    }
+
+    function groupSelected(){
+      if(selectedIds.size<1) return;
+      const groupId = Date.now();
+      const groupTitle = prompt("Nome do Grupo:", "Nova Stack"); if(!groupTitle) return;
+      
+      // Create group item
+      stacks.unshift({ id:groupId, type:'group', title:groupTitle, date:new Date().toLocaleDateString('pt-BR'), tag:'GROUP', content:'' });
+      
+      // Assign children
+      stacks.forEach(s=>{ if(selectedIds.has(s.id)) s.groupId = groupId; });
+      
+      selectedIds.clear(); updateBatchUI(); persist(); renderVault();
+    }
+
+    function ungroupItem(id){ 
+      const idx = stacks.findIndex(s=>s.id===id); 
+      if(idx>-1){ delete stacks[idx].groupId; persist(); renderVault(); } 
+    }
+
+    function deleteSelected(){ 
+      if(!confirm(`Deletar ${selectedIds.size} itens?`)) return; 
+      stacks = stacks.filter(s => !selectedIds.has(s.id)); 
+      selectedIds.clear(); updateBatchUI(); persist(); renderVault(); 
+    }
+
+    // CRUD
+    function saveStack(){
+      const content = document.getElementById('creatorContent').value;
+      const tag = document.getElementById('creatorTag').value || 'APP';
+      if(!content) return alert('Conteúdo vazio');
+      const titleMatch = content.match(/<title>(.*?)<\/title>/i);
+      const title = titleMatch ? titleMatch[1] : `Stack ${stacks.length+1}`;
+      stacks.unshift({ id: Date.now(), title, content, tag: tag.toUpperCase(), date: new Date().toLocaleDateString('pt-BR') });
+      persist(); renderVault(); document.getElementById('creatorContent').value=''; toggleCreator();
+    }
+
+    function deleteStack(id){
+      if(!confirm('Deletar permanentemente?')) return;
+      const item = stacks.find(s=>s.id===id);
+      if(item && item.type === 'group'){ stacks.forEach(c=>{ if(c.groupId === id) delete c.groupId; }) }
+      stacks = stacks.filter(s=>s.id!==id);
+      persist(); renderVault();
+    }
+
+    function updateStack(id){
+      const newVal = document.getElementById(`code-${id}`).value;
+      const idx = stacks.findIndex(s=>s.id===id);
+      if(idx>-1){ stacks[idx].content=newVal; persist(); alert('Salvo!'); }
+    }
+
+    function copyStack(id){ const s = stacks.find(s=>s.id===id); navigator.clipboard.writeText(s.content); alert('Copiado'); }
+
+    // ==== RUNTIME ====
+    function runStack(id){
+      const s = stacks.find(s => s.id === id);
+      const container = document.getElementById('runtimeContainer');
+      container.innerHTML = '';
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = "width:100%;height:100%;border:none;";
+      // Raw mode logic
+      if(!rawMode){
+        iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-modals allow-pointer-lock allow-popups allow-presentation allow-same-origin allow-top-navigation-by-user-activation');
+      }
+      iframe.srcdoc = s.content;
+      container.appendChild(iframe);
+      document.getElementById('immersiveLayer').classList.add('active');
+    }
+    function closeRuntime(){ document.getElementById('immersiveLayer').classList.remove('active'); setTimeout(()=>document.getElementById('runtimeContainer').innerHTML='',500); }
+
+    // Floating
+    function floatStack(id){
+      const s = stacks.find(s=>s.id===id);
+      const el = document.createElement('div'); el.className='floating-card'; el.style.left='50px'; el.style.top='50px'; el.style.zIndex=++zIndexCounter;
+      const sandboxAttr = rawMode ? '' : 'sandbox="allow-scripts allow-forms allow-modals allow-same-origin"';
+      
+      el.innerHTML = `
+        <div class="float-header" onmousedown="dragStart(event, this.parentElement)">
+          <div style="font-size:0.8rem;font-weight:700;display:flex;align-items:center;gap:5px"><i data-lucide="zap" size="14"></i>${escapeHtml(s.title)}</div>
+          <button class="btn-main ghost" style="width:24px;height:24px;padding:0;justify-content:center" onclick="this.closest('.floating-card').remove()">✕</button>
+        </div>
+        <div class="float-body"><iframe class="float-iframe" style="width:100%;height:100%;border:none;background:#fff" ${sandboxAttr} srcdoc="${escapeHtml(s.content)}"></iframe></div>`;
+      
+      el.onmousedown = ()=>el.style.zIndex = ++zIndexCounter;
+      document.body.appendChild(el);
+      lucide.createIcons();
+    }
+    
+    function popoutStack(id){
+      const s = stacks.find(s => s.id === id);
+      const win = window.open('', '_blank', 'width=900,height=700');
+      win.document.write(s.content);
+      win.document.close();
+    }
+
+    // Drag
+    let dragItem=null, dragOffset={x:0,y:0};
+    function dragStart(e,item){ if(e.target.tagName==='BUTTON') return; dragItem=item; const rect=item.getBoundingClientRect(); dragOffset={x:e.clientX-rect.left,y:e.clientY-rect.top}; document.addEventListener('mousemove',dragMove); document.addEventListener('mouseup',dragEnd); }
+    function dragMove(e){ if(!dragItem) return; dragItem.style.left=(e.clientX-dragOffset.x)+'px'; dragItem.style.top=(e.clientY-dragOffset.y)+'px'; }
+    function dragEnd(){ dragItem=null; document.removeEventListener('mousemove',dragMove); document.removeEventListener('mouseup',dragEnd); }
+
+    // Modes
+    function toggleRawMode(){ 
+      rawMode = !rawMode; 
+      document.body.classList.toggle('raw-mode', rawMode); 
+      document.body.classList.toggle('safe-mode', !rawMode); 
+      document.getElementById('rawIcon').setAttribute('data-lucide', rawMode ? 'shield-alert' : 'shield-check'); 
+      lucide.createIcons();
+      if(rawMode) alert("RAW MODE ACTIVE: Sandboxing disabled. Only run trusted code.");
+    }
+
+    // Unified
+    function openUnifiedView(){
+      const filtered = stacks.filter(s => !s.groupId && s.type !== 'group');
+      if(!filtered.length) return alert('Nada para unificar.');
+      const combined = filtered.map(s=>`\n${s.content}\n\n`).join('\n\n');
+      document.getElementById('unifiedArea').value = combined;
+      document.getElementById('unifiedOverlay').classList.add('active');
+    }
+    function toggleUnified(){ document.getElementById('unifiedOverlay').classList.remove('active'); }
+    function saveUnified(){ const content=document.getElementById('unifiedArea').value; if(!content) return; stacks.unshift({ id:Date.now(), title:'Unified '+new Date().toLocaleTimeString(), content, tag:'GROUP', date:new Date().toLocaleDateString('pt-BR'), type:'group' }); persist(); renderVault(); toggleUnified(); }
+
+    // Utils
+    function escapeHtml(str){ return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+    function setFilter(tag, el){ currentFilter = tag; document.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('active')); el.classList.add('active'); renderVault(); }
+    function handleFile(e){ const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = ev=>{ document.getElementById('creatorContent').value = ev.target.result; if(!document.getElementById('creatorCard').classList.contains('expanded')) toggleCreator(); }; r.readAsText(f); }
+
+    // ==== INFODOSE UPDATE LOOP ====
+    function updateAll(){
+      const now = new Date();
+      document.getElementById('heroTime').textContent = now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+      document.getElementById('heroDate').textContent = now.toLocaleDateString('pt-BR', {day:'numeric', month:'short'}).toUpperCase();
+
+      const h = now.getHours();
+      let key = 'evening';
+      if(h >= 5 && h < 12) key = 'morning';
+      else if(h >= 12 && h < 18) key = 'afternoon';
+      
+      const CONFIG = { 
+        morning:{label:'Fase de Ascensão', phrase:'Energia Alta'}, 
+        afternoon:{label:'Pico de Foco', phrase:'Fluxo Intenso'}, 
+        evening:{label:'Ciclo de Síntese', phrase:'Restauração'} 
+      };
+      
+      document.getElementById('heroCycle').textContent = CONFIG[key].label;
+      if(!document.getElementById('infodoseCard').classList.contains('open')) document.getElementById('heroPhrase').textContent = CONFIG[key].phrase;
+
+      // Progress bar (6am to 11pm)
+      const start = 6, end = 23;
+      const current = now.getHours() + now.getMinutes()/60;
+      let pct = ((current - start)/(end - start))*100; pct = Math.max(0,Math.min(100,pct));
+      document.getElementById('heroProgress').style.width = pct + '%';
+      document.getElementById('heroProgressText').textContent = Math.floor(pct)+'% DO CICLO';
+    }
+
+    // Hero toggle listener
+    document.getElementById('heroToggle').addEventListener('click', ()=>{
+      document.getElementById('infodoseCard').classList.toggle('open');
+      const isOpen = document.getElementById('infodoseCard').classList.contains('open');
+      document.getElementById('heroToggleIcon').setAttribute('data-lucide', isOpen ? 'minus' : 'plus');
+      lucide.createIcons();
+    });
+
+    // Initialize
+    if(!stacks.length){
+      stacks.push({ id: Date.now(), title:'System: Welcome', content:`<html><body style="background:#000;color:#0f0;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh"><h1>SYSTEM ONLINE</h1></body></html>`, tag:'SYS', date:new Date().toLocaleDateString('pt-BR') });
+      persist();
+    }
+    renderVault();
+    updateAll();
+    setInterval(updateAll, 60000);
+    
+    // Shortcuts
+    window.addEventListener('keydown', (e)=>{ 
+        if(e.key === 'Escape') closeRuntime();
+    });
+
+  </script>
+</body>
+</html>

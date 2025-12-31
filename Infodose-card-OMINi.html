@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>DUAL // FUSION — v15 Omni-Stack</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#030406">
+
+  <!-- Icon Pack -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-deep: #030406;
+      --glass-surface: rgba(20, 20, 25, 0.92);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --neon-cyan: #00f2ff;
+      --neon-purple: #bd00ff;
+      --neon-green: #23ac51;
+      --neon-orange: #f97316;
+      --neon-red: #ef4444;
+      --ease-elastic: cubic-bezier(0.34, 1.3, 0.64, 1);
+      --font-ui: 'Montserrat', sans-serif;
+      --font-code: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      margin: 0; padding: 20px;
+      min-height: 100vh;
+      background-color: var(--bg-deep);
+      color: #fff;
+      font-family: var(--font-ui);
+      overflow-x: hidden;
+      background-image: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #000 100%);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--neon-cyan); }
+
+    /* Layout */
+    .layout {
+      width: 100%; max-width: 1400px; margin: 0 auto;
+      display: grid; grid-template-columns: 350px 1fr; gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+    /* Side Panel */
+    .fusion-card {
+      position: sticky; top: 20px;
+      background: var(--glass-surface); border: 1px solid var(--glass-border);
+      border-radius: 24px; padding: 20px;
+      backdrop-filter: blur(20px); z-index: 100;
+      transition: box-shadow 0.3s, border-color 0.3s;
+    }
+    
+    /* RAW MODE STYLES */
+    .raw-mode .fusion-card { border-color: rgba(239, 68, 68, 0.4); box-shadow: 0 0 30px rgba(239, 68, 68, 0.15); }
+    .raw-indicator { display:none; color:var(--neon-red); font-weight:bold; font-size:0.7rem; margin-left:10px; letter-spacing:1px; animation: pulseRed 2s infinite; }
+    .raw-mode .raw-indicator { display:inline-block; }
+    @keyframes pulseRed { 0% { opacity:0.6; } 50% { opacity:1; } 100% { opacity:0.6; } }
+
+    .card-header { display: flex; align-items: center; gap: 15px; cursor: pointer; user-select: none; }
+    .avatar-ring { 
+      width: 48px; height: 48px; border-radius: 50%; 
+      background: conic-gradient(from 0deg, var(--neon-cyan), var(--neon-purple), var(--neon-cyan)); 
+      padding: 2px; animation: spin 10s linear infinite;
+    }
+    .avatar-inner { width: 100%; height: 100%; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .brand { font-weight: 800; font-size: 1.2rem; letter-spacing: -1px; }
+    .status-label { font-size: 0.6rem; color: var(--neon-cyan); font-family: var(--font-code); }
+
+    .recursive-block { 
+      overflow: hidden; max-height: 0; opacity: 0; transition: 0.4s ease;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .fusion-card.open .recursive-block { max-height: 500px; opacity: 1; margin-top: 15px; padding-top: 15px; border-top: 1px solid #222; }
+
+    .cyber-input { 
+      width: 100%; background: #0a0a0c; border: 1px solid #333; 
+      border-radius: 8px; padding: 10px; color: #fff; font-family: var(--font-code); 
+      font-size: 0.8rem; transition: 0.3s; 
+    }
+    .cyber-input:focus { border-color: var(--neon-purple); }
+
+    /* --- STACK LIST (ACCORDION & GROUPS) --- */
+    .master-card {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+      border-radius: 12px; margin-bottom: 8px; overflow: hidden;
+      transition: all 0.3s ease; position: relative;
+    }
+    .master-card:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); }
+    
+    /* Active State (Expanded) */
+    .master-card.expanded { 
+      border-color: var(--neon-cyan); 
+      background: rgba(0,0,0,0.4);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .master-card.expanded::before {
+      content:''; position: absolute; left:0; top:0; bottom:0; width:4px; background: var(--neon-cyan);
+    }
+
+    /* Group Styling */
+    .master-card.is-group { border-left: 4px solid var(--neon-purple); }
+    .master-card.is-group .card-title { color: var(--neon-purple); }
+    .group-container { padding: 15px; background: rgba(0,0,0,0.3); border-top: 1px solid #333; display:flex; flex-direction:column; gap:8px;}
+
+    .vault-header { 
+      display: flex; justify-content: space-between; align-items: center; 
+      padding: 14px 18px; cursor: pointer; user-select: none;
+    }
+    .header-left { display:flex; align-items:center; gap:12px; flex:1; overflow:hidden; }
+    
+    .stack-checkbox { 
+      width: 18px; height: 18px; border-radius: 4px; border: 1px solid #555; 
+      background: #000; cursor: pointer; appearance: none; display: flex; align-items: center; justify-content: center;
+    }
+    .stack-checkbox:checked { background: var(--neon-cyan); border-color: var(--neon-cyan); }
+    .stack-checkbox:checked::after { content:'✔'; font-size:12px; color:#000; }
+
+    .card-title { font-weight: 700; font-size: 0.95rem; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-meta { font-size: 0.65rem; color: #666; font-family: var(--font-code); display: flex; gap: 8px; margin-top: 4px; }
+    .tag-badge { background: #111; padding: 2px 6px; border-radius: 4px; color: var(--neon-cyan); border: 1px solid #222; }
+
+    .dock { display: flex; gap: 4px; align-items: center; }
+    .ico { 
+      width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; 
+      background: transparent; color: #777; cursor: pointer; border: 1px solid transparent; transition: 0.2s; 
+    }
+    .ico:hover { background: #222; color: #fff; }
+    .ico-run { color: var(--neon-green); }
+    .ico-run:hover { background: rgba(35, 172, 81, 0.1); }
+    .ico-del:hover { background: rgba(239, 68, 68, 0.1); color: var(--neon-red); }
+
+    .content-box { 
+      max-height: 0; overflow: hidden; opacity: 0; transition: all 0.4s var(--ease-elastic); 
+      background: #000; border-top: 1px solid #222;
+    }
+    .master-card.expanded .content-box { max-height: 1200px; opacity: 1; }
+    
+    /* Padding adjustments for regular content vs group content */
+    .content-inner { padding: 15px; }
+
+    .code-area { 
+      width: 100%; background: #080808; border: 1px solid #222; 
+      border-radius: 8px; padding: 12px; color: #ccc; font-family: var(--font-code); 
+      font-size: 0.8rem; min-height: 100px; resize: vertical; 
+    }
+
+    /* --- FLOATING CARDS --- */
+    .floating-card {
+      position: fixed; width: 480px; height: 320px;
+      border-radius: 16px; background: rgba(10, 10, 14, 0.95);
+      border: 1px solid #333; box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+      z-index: 12000; overflow: hidden; resize: both;
+      display: flex; flex-direction: column;
+      animation: popIn 0.3s var(--ease-elastic);
+    }
+    @keyframes popIn { from{transform:scale(0.9);opacity:0;} to{transform:scale(1);opacity:1;} }
+
+    .float-header {
+      background: #111; padding: 10px 14px; border-bottom: 1px solid #222;
+      display: flex; justify-content: space-between; align-items: center; cursor: grab;
+    }
+    .float-header:active { cursor: grabbing; background: #161616; }
+    .float-title { font-weight: 700; font-size: 0.8rem; color: #fff; display:flex; align-items:center; gap:8px;}
+    .float-actions { display: flex; gap: 5px; }
+    .float-btn { width:24px; height:24px; border-radius:4px; border:none; background:#222; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center;}
+    .float-btn:hover { background: #333; }
+    .float-btn.close:hover { background: var(--neon-red); }
+    .float-body { flex: 1; display: flex; flex-direction: column; background: #000; position:relative; }
+    .float-iframe { width: 100%; height: 100%; border: none; background: #fff; }
+
+    /* --- UNIFIED OVERLAY --- */
+    .unified-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+      z-index: 14000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.3s;
+    }
+    .unified-overlay.active { opacity: 1; pointer-events: all; }
+    .unified-card {
+      width: 90%; height: 90%; background: #050505; border: 1px solid #333;
+      border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 15px;
+      box-shadow: 0 0 100px rgba(0,0,0,0.8);
+    }
+
+    /* Buttons */
+    .btn-main { 
+      padding: 10px 20px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; 
+      font-size: 0.8rem; display: flex; align-items: center; gap: 8px; transition: 0.2s; justify-content: center;
+    }
+    .btn-main.primary { background: var(--neon-cyan); color: #000; }
+    .btn-main.primary:hover { box-shadow: 0 0 15px rgba(0, 242, 255, 0.4); }
+    .btn-main.ghost { background: #222; color: #fff; }
+    .btn-main.ghost:hover { background: #333; }
+    .btn-main.danger { background: rgba(239, 68, 68, 0.1); color: var(--neon-red); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .btn-main.danger:hover { background: rgba(239, 68, 68, 0.2); }
+
+    /* Runtime Overlay */
+    #immersiveLayer {
+      position: fixed; inset: 0; background: #000; z-index: 13000;
+      transform: translateY(100%); transition: transform 0.5s var(--ease-elastic);
+      display: flex; flex-direction: column;
+    }
+    #immersiveLayer.active { transform: translateY(0); }
+    .raw-badge { background: var(--neon-red); color:#000; padding:2px 6px; border-radius:4px; font-weight:900; font-size:0.7rem; display:none;}
+    .raw-mode .raw-badge { display:inline-block; }
+
+    /* Filters & Actions Bar */
+    .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
+    .filter-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom:5px; }
+    .filter-pill { 
+      padding: 6px 14px; background: #111; border-radius: 20px; 
+      font-size: 0.7rem; font-weight: 700; color: #666; cursor: pointer; border: 1px solid #222; 
+    }
+    .filter-pill.active { background: #fff; color: #000; }
+    
+    .batch-actions { display:none; gap:10px; animation: fadeIn 0.3s; }
+    .batch-actions.active { display:flex; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  </style>
+</head>
+<body class="safe-mode">
+
+  <!-- RUNTIME FULLSCREEN -->
+  <div id="immersiveLayer">
+    <div style="height:50px; background:#050505; border-bottom:1px solid #222; display:flex; align-items:center; justify-content:space-between; padding:0 20px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-family:var(--font-code); color:var(--neon-green); font-size:0.8rem;">RUNTIME // ACTIVE</span>
+        <span class="raw-badge">RAW MODE</span>
+      </div>
+      <button class="btn-main ghost" onclick="closeRuntime()" style="height:32px;">FECHAR</button>
+    </div>
+    <div id="runtimeContainer" style="flex:1; background:#fff;"></div>
+  </div>
+
+  <!-- UNIFIED EDITOR -->
+  <div class="unified-overlay" id="unifiedOverlay">
+    <div class="unified-card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="margin:0; font-size:1.2rem; color:var(--neon-orange);">UNIFIED STACK VIEW</h2>
+        <div style="display:flex; gap:10px;">
+          <button class="btn-main ghost" onclick="toggleUnified()">CANCELAR</button>
+          <button class="btn-main primary" onclick="saveUnified()">SALVAR COMO NOVO</button>
+        </div>
+      </div>
+      <textarea id="unifiedArea" class="code-area" style="flex:1; font-size:0.9rem; border-color:#333;"></textarea>
+    </div>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div class="layout">
+    
+    <!-- SIDEBAR -->
+    <aside>
+      <div class="fusion-card" id="mainCard">
+        <div class="card-header" onclick="toggleMenu()">
+          <div class="avatar-ring">
+            <div class="avatar-inner">
+               <i data-lucide="zap" size="24" color="#fff"></i>
+            </div>
+          </div>
+          <div style="flex:1">
+            <div class="brand">DUAL // CORE</div>
+            <div class="status-label">v15.0 OMNI-STACK <span class="raw-indicator">[RAW]</span></div>
+          </div>
+          <!-- Action Buttons in Sidebar Header -->
+          <div style="display:flex; gap:5px;" onclick="event.stopPropagation()">
+            <button class="ico" id="rawToggleBtn" onclick="toggleRawMode()" title="Toggle RAW/SAFE Mode">
+               <i data-lucide="shield-check" id="rawIcon"></i>
+            </button>
+            <button class="ico" onclick="toggleMenu()">
+               <i data-lucide="chevron-down" id="chevronIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="recursive-block">
+          <label style="font-size:0.7rem; color:#666; font-weight:bold;">KERNEL USER</label>
+          <input type="text" class="cyber-input" value="ADMIN_User_01">
+          
+          <div style="display:flex; gap:10px; margin-top:10px;">
+            <button class="btn-main ghost" style="flex:1" onclick="document.getElementById('fileIn').click()">UPLOAD</button>
+            <input type="file" id="fileIn" hidden onchange="handleFile(event)">
+          </div>
+          <div id="fileInfo" style="font-size:0.7rem; color:var(--neon-cyan); margin-top:5px;"></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <main>
+      <div class="action-bar">
+        <div class="filter-bar">
+          <div class="filter-pill active" onclick="setFilter('ALL', this)">TODOS</div>
+          <div class="filter-pill" onclick="setFilter('APP', this)">APPS</div>
+          <div class="filter-pill" onclick="setFilter('GROUP', this)">GRUPOS</div>
+        </div>
+        
+        <!-- Batch Actions -->
+        <div class="batch-actions" id="batchActions">
+          <button class="btn-main primary" style="height:32px; font-size:0.7rem;" onclick="groupSelected()">
+            <i data-lucide="folder-plus" size="14"></i> AGRUPAR
+          </button>
+          <button class="btn-main danger" style="height:32px; font-size:0.7rem;" onclick="deleteSelected()">
+            <i data-lucide="trash" size="14"></i>
+          </button>
+        </div>
+
+        <button class="btn-main ghost" style="height:32px; font-size:0.7rem;" onclick="openUnifiedView()">
+          <i data-lucide="layers" size="14"></i> UNIFY ALL
+        </button>
+      </div>
+
+      <!-- Creator Input -->
+      <div class="master-card" id="creatorCard" style="border-style:dashed; border-color:#333;">
+        <div class="vault-header" onclick="toggleCreator()">
+          <span class="card-title" style="color:var(--neon-cyan)">+ NOVO STACK</span>
+          <i data-lucide="plus" size="18"></i>
+        </div>
+        <div class="content-box">
+          <div class="content-inner">
+            <textarea id="creatorContent" class="code-area" placeholder="Cole código HTML/JS aqui..." style="margin-bottom:10px;"></textarea>
+            <div style="display:flex; gap:10px;">
+              <input id="creatorTag" class="cyber-input" style="flex:0.3" placeholder="TAG">
+              <button class="btn-main primary" style="flex:0.7" onclick="saveStack()">SALVAR</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STACK LIST -->
+      <div id="vaultList"></div>
+    </main>
+  </div>
+
+  <script>
+    // --- INIT ---
+    lucide.createIcons();
+    // Migração de dados simples (v14 -> v15)
+    let stacks = JSON.parse(localStorage.getItem('fusion_stacks_v15') || localStorage.getItem('fusion_stacks_v14') || '[]');
+    let currentFilter = 'ALL';
+    let zIndexCounter = 12001;
+    let rawMode = false;
+    let selectedIds = new Set();
+
+    // --- RAW MODE LOGIC ---
+    function toggleRawMode() {
+      rawMode = !rawMode;
+      const body = document.body;
+      const icon = document.getElementById('rawIcon');
+      const btn = document.getElementById('rawToggleBtn');
+
+      if (rawMode) {
+        body.classList.add('raw-mode');
+        body.classList.remove('safe-mode');
+        icon.setAttribute('data-lucide', 'shield-alert');
+        icon.style.color = 'var(--neon-red)';
+        btn.style.borderColor = 'var(--neon-red)';
+      } else {
+        body.classList.remove('raw-mode');
+        body.classList.add('safe-mode');
+        icon.setAttribute('data-lucide', 'shield-check');
+        icon.style.color = '#777';
+        btn.style.borderColor = 'transparent';
+      }
+      lucide.createIcons();
+    }
+
+    // --- RENDER ---
+    function renderVault() {
+      const list = document.getElementById('vaultList');
+      
+      // Filter Logic: 
+      // If filtering by 'GROUP', show only groups.
+      // If 'ALL', show items that are NOT inside a group (root items).
+      // If 'APP'/'CODE', show items with that tag AND not inside a group.
+      
+      let filtered = stacks.filter(s => !s.groupId); // Only root items initially
+
+      if (currentFilter !== 'ALL') {
+        if (currentFilter === 'GROUP') {
+          filtered = filtered.filter(s => s.type === 'group');
+        } else {
+          filtered = filtered.filter(s => s.tag === currentFilter);
+        }
+      }
+
+      if(!filtered.length) {
+        list.innerHTML = `<div style="text-align:center; padding:40px; color:#333; font-weight:bold;">VAULT VAZIO</div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(s => {
+        if (s.type === 'group') return renderGroup(s);
+        return renderItem(s);
+      }).join('');
+      
+      lucide.createIcons();
+      updateBatchUI();
+    }
+
+    function renderItem(s, isInsideGroup = false) {
+      const isSelected = selectedIds.has(s.id);
+      return `
+        <div class="master-card" id="stack-${s.id}">
+          <div class="vault-header" onclick="toggleAccordion(${s.id})">
+            <div class="header-left">
+              <input type="checkbox" class="stack-checkbox" 
+                onclick="toggleSelect(event, ${s.id})" 
+                ${isSelected ? 'checked' : ''}>
+              <div style="overflow:hidden;">
+                <span class="card-title">${escapeHtml(s.title)}</span>
+                <div class="card-meta">
+                  <span class="tag-badge">${s.tag}</span>
+                  <span>${s.date}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="dock" onclick="event.stopPropagation()">
+              <button class="ico ico-run" title="Rodar" onclick="runStack(${s.id})"><i data-lucide="play" size="16"></i></button>
+              <button class="ico" title="Detach" onclick="floatStack(${s.id})"><i data-lucide="picture-in-picture-2" size="16"></i></button>
+              <button class="ico" title="Pop-out" onclick="popoutStack(${s.id})"><i data-lucide="external-link" size="16"></i></button>
+              ${isInsideGroup ? 
+                `<button class="ico" title="Desagrupar" onclick="ungroupItem(${s.id})"><i data-lucide="log-out" size="16"></i></button>` : 
+                `<button class="ico ico-del" title="Apagar" onclick="deleteStack(${s.id})"><i data-lucide="trash-2" size="16"></i></button>`
+              }
+            </div>
+          </div>
+          
+          <div class="content-box">
+            <div class="content-inner">
+              <div style="display:flex; justify-content:flex-end; padding-bottom:10px; gap:10px;">
+                 <button class="btn-main ghost" style="height:30px; font-size:0.7rem;" onclick="copyStack(${s.id})">COPIAR</button>
+                 <button class="btn-main ghost" style="height:30px; font-size:0.7rem;" onclick="updateStack(${s.id})">SALVAR</button>
+              </div>
+              <textarea id="code-${s.id}" class="code-area" spellcheck="false">${escapeHtml(s.content)}</textarea>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderGroup(group) {
+      // Find children
+      const children = stacks.filter(s => s.groupId === group.id);
+      
+      return `
+        <div class="master-card is-group" id="stack-${group.id}">
+          <div class="vault-header" onclick="toggleAccordion(${group.id})">
+            <div class="header-left">
+              <i data-lucide="folder" size="20" color="var(--neon-purple)"></i>
+              <div style="overflow:hidden;">
+                <span class="card-title">${escapeHtml(group.title)}</span>
+                <div class="card-meta">
+                  <span class="tag-badge">GRUPO</span>
+                  <span>${children.length} ITENS</span>
+                </div>
+              </div>
+            </div>
+            <div class="dock" onclick="event.stopPropagation()">
+              <button class="ico ico-del" title="Apagar Grupo" onclick="deleteStack(${group.id})"><i data-lucide="trash-2" size="16"></i></button>
+            </div>
+          </div>
+          <div class="content-box">
+            <div class="group-container">
+              ${children.length ? children.map(c => renderItem(c, true)).join('') : '<div style="padding:10px; color:#555; font-size:0.8rem;">Vazio</div>'}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- ACCORDION LOGIC ---
+    function toggleAccordion(id) {
+      const el = document.getElementById(`stack-${id}`);
+      if(el) el.classList.toggle('expanded');
+    }
+
+    function toggleMenu() {
+      document.getElementById('mainCard').classList.toggle('open');
+      document.getElementById('chevronIcon').style.transform = 
+        document.getElementById('mainCard').classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+    
+    function toggleCreator() {
+      document.getElementById('creatorCard').classList.toggle('expanded');
+    }
+
+    // --- SELECTION & GROUPING ---
+    function toggleSelect(e, id) {
+      e.stopPropagation();
+      if(selectedIds.has(id)) selectedIds.delete(id);
+      else selectedIds.add(id);
+      updateBatchUI();
+    }
+
+    function updateBatchUI() {
+      const batchDiv = document.getElementById('batchActions');
+      if(selectedIds.size > 0) batchDiv.classList.add('active');
+      else batchDiv.classList.remove('active');
+    }
+
+    function groupSelected() {
+      if(selectedIds.size < 1) return;
+      const groupId = Date.now();
+      const groupTitle = prompt("Nome do Grupo:", "Nova Stack");
+      if(!groupTitle) return;
+
+      // Create group item
+      stacks.unshift({
+        id: groupId,
+        type: 'group',
+        title: groupTitle,
+        date: new Date().toLocaleDateString('pt-BR'),
+        tag: 'GROUP',
+        content: ''
+      });
+
+      // Assign children
+      stacks.forEach(s => {
+        if(selectedIds.has(s.id)) {
+          s.groupId = groupId;
+        }
+      });
+
+      selectedIds.clear();
+      persist();
+      renderVault();
+    }
+
+    function ungroupItem(id) {
+      const idx = stacks.findIndex(s => s.id === id);
+      if(idx > -1) {
+        delete stacks[idx].groupId;
+        persist();
+        renderVault();
+      }
+    }
+
+    function deleteSelected() {
+      if(!confirm(`Deletar ${selectedIds.size} itens?`)) return;
+      stacks = stacks.filter(s => !selectedIds.has(s.id));
+      selectedIds.clear();
+      persist();
+      renderVault();
+    }
+
+    // --- STACK ACTIONS ---
+    function saveStack() {
+      const content = document.getElementById('creatorContent').value;
+      const tag = document.getElementById('creatorTag').value || 'APP';
+      if(!content) return;
+      
+      const titleMatch = content.match(/<title>(.*?)<\/title>/);
+      const title = titleMatch ? titleMatch[1] : `Stack ${stacks.length + 1}`;
+
+      stacks.unshift({
+        id: Date.now(),
+        title: title,
+        content: content,
+        tag: tag.toUpperCase(),
+        date: new Date().toLocaleDateString('pt-BR')
+      });
+      persist();
+      renderVault();
+      document.getElementById('creatorContent').value = '';
+      toggleCreator();
+    }
+
+    function deleteStack(id) {
+      if(confirm('Deletar permanentemente?')) {
+        // If it's a group, ungroup children first? Or delete them? 
+        // Let's ungroup children to be safe, or just delete group.
+        // Current logic: If group deleted, children become orphans (visible in root).
+        const item = stacks.find(s => s.id === id);
+        if(item && item.type === 'group') {
+           stacks.forEach(child => { if(child.groupId === id) delete child.groupId; });
+        }
+        
+        stacks = stacks.filter(s => s.id !== id);
+        persist();
+        renderVault();
+      }
+    }
+
+    function updateStack(id) {
+      const newVal = document.getElementById(`code-${id}`).value;
+      const idx = stacks.findIndex(s => s.id === id);
+      if(idx > -1) {
+        stacks[idx].content = newVal;
+        persist();
+        alert('Salvo!');
+      }
+    }
+
+    function copyStack(id) {
+      const s = stacks.find(s => s.id === id);
+      navigator.clipboard.writeText(s.content);
+      alert('Copiado');
+    }
+
+    // --- RUNTIME & PERMISSIONS ---
+    // RAW MODE: No Sandbox attribute (Full Trust)
+    // SAFE MODE: Restricted Sandbox
+    function runStack(id) {
+      const s = stacks.find(s => s.id === id);
+      const container = document.getElementById('runtimeContainer');
+      container.innerHTML = '';
+      
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = "width:100%; height:100%; border:none;";
+      
+      if (!rawMode) {
+        // Safe Mode
+        iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-modals allow-pointer-lock allow-popups allow-presentation allow-same-origin allow-top-navigation-by-user-activation');
+      } else {
+        // RAW MODE: No sandbox attribute implies 'allow-same-origin allow-scripts' + everything else in parent context effectively (for srcdoc)
+        // Note: srcdoc inheritance varies by browser. 
+        // For MAX permission, we might rely on the absence of sandbox.
+        // Some browsers still restrict srcdoc.
+      }
+      
+      iframe.srcdoc = s.content;
+      container.appendChild(iframe);
+      document.getElementById('immersiveLayer').classList.add('active');
+    }
+
+    function closeRuntime() {
+      document.getElementById('immersiveLayer').classList.remove('active');
+      setTimeout(() => document.getElementById('runtimeContainer').innerHTML = '', 500);
+    }
+
+    // --- FLOATING CARDS ---
+    function floatStack(id) {
+      const s = stacks.find(s => s.id === id);
+      const el = document.createElement('div');
+      el.className = 'floating-card';
+      el.style.left = '50px';
+      el.style.top = '50px';
+      el.style.zIndex = ++zIndexCounter;
+      
+      // Inherit RAW mode for floating cards? Let's use current mode.
+      const sandboxAttr = rawMode ? '' : 'sandbox="allow-scripts allow-forms allow-modals allow-same-origin"';
+
+      el.innerHTML = `
+        <div class="float-header" onmousedown="dragStart(event, this.parentElement)">
+          <div class="float-title">
+             <i data-lucide="zap" size="14" color="var(--neon-cyan)"></i>
+             ${escapeHtml(s.title)}
+          </div>
+          <div class="float-actions">
+            <button class="float-btn" onclick="this.closest('.floating-card').remove()">✕</button>
+          </div>
+        </div>
+        <div class="float-body">
+          <iframe class="float-iframe" ${sandboxAttr} srcdoc="${escapeHtml(s.content)}"></iframe>
+        </div>
+      `;
+      
+      el.onmousedown = () => el.style.zIndex = ++zIndexCounter;
+      document.body.appendChild(el);
+      lucide.createIcons();
+    }
+
+    // --- DRAG LOGIC ---
+    let dragItem = null;
+    let dragOffset = {x:0, y:0};
+
+    function dragStart(e, item) {
+      if(e.target.tagName === 'BUTTON') return;
+      dragItem = item;
+      const rect = item.getBoundingClientRect();
+      dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      document.addEventListener('mousemove', dragMove);
+      document.addEventListener('mouseup', dragEnd);
+    }
+    function dragMove(e) {
+      if(!dragItem) return;
+      dragItem.style.left = (e.clientX - dragOffset.x) + 'px';
+      dragItem.style.top = (e.clientY - dragOffset.y) + 'px';
+    }
+    function dragEnd() {
+      dragItem = null;
+      document.removeEventListener('mousemove', dragMove);
+      document.removeEventListener('mouseup', dragEnd);
+    }
+
+    // --- POP-OUT ---
+    function popoutStack(id) {
+      const s = stacks.find(s => s.id === id);
+      const win = window.open('', '_blank', 'width=800,height=600');
+      win.document.write(s.content);
+      win.document.close();
+    }
+
+    // --- UNIFY ---
+    function openUnifiedView() {
+      const filtered = stacks.filter(s => !s.groupId && s.type !== 'group');
+      if(!filtered.length) return alert('Nada para unificar.');
+
+      const combined = filtered.map(s => 
+        `<!-- STACK: ${s.title} -->\n${s.content}\n\n`
+      ).join('<!-- SEPARATOR -->\n\n');
+
+      document.getElementById('unifiedArea').value = combined;
+      document.getElementById('unifiedOverlay').classList.add('active');
+    }
+
+    function toggleUnified() {
+      document.getElementById('unifiedOverlay').classList.remove('active');
+    }
+
+    function saveUnified() {
+      const content = document.getElementById('unifiedArea').value;
+      if(content) {
+        stacks.unshift({
+          id: Date.now(),
+          title: 'Unified Group ' + new Date().toLocaleTimeString(),
+          content: content,
+          tag: 'GROUP',
+          date: new Date().toLocaleDateString('pt-BR')
+        });
+        persist();
+        renderVault();
+        toggleUnified();
+      }
+    }
+
+    // --- UTILS ---
+    function escapeHtml(str) {
+      return (str||'').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function setFilter(tag, el) {
+      currentFilter = tag;
+      document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      renderVault();
+    }
+
+    function persist() {
+      localStorage.setItem('fusion_stacks_v15', JSON.stringify(stacks));
+    }
+
+    function handleFile(e) {
+      const f = e.target.files[0];
+      if(!f) return;
+      const r = new FileReader();
+      r.onload = (ev) => {
+        document.getElementById('creatorContent').value = ev.target.result;
+        if(!document.getElementById('creatorCard').classList.contains('expanded')) toggleCreator();
+      };
+      r.readAsText(f);
+    }
+
+    // Boot
+    renderVault();
+
+  </script>
+</body>
+</html>
